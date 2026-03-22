@@ -4,18 +4,37 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k \"vite\" \"tsx watch server/index.ts\"",
+    "dev:web": "vite",
+    "dev:api": "tsx watch server/index.ts",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "tsx server/index.ts",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:check": "node scripts/db-check.mjs",
+    "db:migrate:railway": "bash scripts/railway-migrate.sh"
   },
   "dependencies": {
-    "react": "^19.2.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.561.0",
-    "react-dom": "^19.2.3"
+    "pg": "^8.13.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-router-dom": "^7.13.1",
+    "tsx": "^4.19.2"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.14.0",
+    "@types/pg": "^8.11.10",
     "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.1.2",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }

@@ -8,6 +8,21 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: {
+          '/api': {
+            // 127.0.0.1 avoids ::1/IPv6 mismatch with the API on some systems
+            target: 'http://127.0.0.1:3001',
+            changeOrigin: true,
+          },
+        },
+      },
+      preview: {
+        proxy: {
+          '/api': {
+            target: 'http://127.0.0.1:3001',
+            changeOrigin: true,
+          },
+        },
       },
       plugins: [react()],
       define: {

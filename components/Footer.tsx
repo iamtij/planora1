@@ -42,17 +42,12 @@ const Footer: React.FC<FooterProps> = ({ onOpenBooking }) => {
           </Reveal>
         </div>
 
-        <div className="border-t border-black/10 pt-12 flex flex-col md:flex-row justify-between items-center text-[10px] font-bold uppercase tracking-architect text-gray-400">
-          <div className="flex items-center gap-6 mb-8 md:mb-0">
+        <div className="border-t border-black/10 pt-12 flex items-center text-[10px] font-bold uppercase tracking-architect text-gray-400">
+          <div className="flex items-center gap-6">
             <div className="grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-pointer">
               <Logo className="h-6" />
             </div>
             <span>&copy; {new Date().getFullYear()} PLANORAMA STUDIOS</span>
-          </div>
-          <div className="flex gap-12">
-            <a href="#!" className="hover:text-black transition-colors p-2">INSTAGRAM</a>
-            <a href="#!" className="hover:text-black transition-colors p-2">LINKEDIN</a>
-            <a href="#!" className="hover:text-black transition-colors p-2">PRIVACY</a>
           </div>
         </div>
       </div>

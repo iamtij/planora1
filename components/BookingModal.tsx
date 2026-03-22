@@ -6,14 +6,32 @@ interface BookingModalProps {
   onClose: () => void;
 }
 
+const PROJECT_TYPES = [
+  'RESIDENTIAL ARCHITECTURE',
+  'COMMERCIAL SPACE',
+  'INTERIOR DESIGN',
+] as const;
+
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
   const [step, setStep] = useState<'form' | 'success'>('form');
   const [isClosing, setIsClosing] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [type, setType] = useState<string>(PROJECT_TYPES[0]);
+  const [inquiry, setInquiry] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setStep('form');
       setIsClosing(false);
+      setName('');
+      setEmail('');
+      setType(PROJECT_TYPES[0]);
+      setInquiry('');
+      setSubmitting(false);
+      setError(null);
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -28,11 +46,32 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
     }, 400);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setTimeout(() => {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          type,
+          inquiry,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setError(typeof data.error === 'string' ? data.error : 'Something went wrong. Try again.');
+        return;
+      }
       setStep('success');
-    }, 600);
+    } catch {
+      setError('Could not reach the server. Is the API running?');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!isOpen && !isClosing) return null;
@@ -57,26 +96,66 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-architect opacity-40">NAME</label>
-                    <input required type="text" className="w-full border-b-2 border-black py-3 focus:border-bauhaus-red outline-none font-bold uppercase text-sm transition-all" placeholder="YOUR NAME" />
+                    <input
+                      required
+                      type="text"
+                      value={name}
+                      onChange={(ev) => setName(ev.target.value)}
+                      className="w-full border-b-2 border-black py-3 focus:border-bauhaus-red outline-none font-bold uppercase text-sm transition-all"
+                      placeholder="YOUR NAME"
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-architect opacity-40">EMAIL</label>
-                    <input required type="email" className="w-full border-b-2 border-black py-3 focus:border-bauhaus-blue outline-none font-bold uppercase text-sm transition-all" placeholder="EMAIL@DOMAIN.COM" />
+                    <input
+                      required
+                      type="email"
+                      value={email}
+                      onChange={(ev) => setEmail(ev.target.value)}
+                      className="w-full border-b-2 border-black py-3 focus:border-bauhaus-blue outline-none font-bold uppercase text-sm transition-all"
+                      placeholder="EMAIL@DOMAIN.COM"
+                    />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-architect opacity-40">PROJECT TYPE</label>
-                  <select className="w-full border-b-2 border-black py-3 focus:border-bauhaus-yellow outline-none font-bold uppercase text-sm cursor-pointer appearance-none bg-transparent">
-                    <option>RESIDENTIAL ARCHITECTURE</option>
-                    <option>COMMERCIAL SPACE</option>
-                    <option>INTERIOR DESIGN</option>
+                  <select
+                    value={type}
+                    onChange={(ev) => setType(ev.target.value)}
+                    className="w-full border-b-2 border-black py-3 focus:border-bauhaus-yellow outline-none font-bold uppercase text-sm cursor-pointer appearance-none bg-transparent"
+                  >
+                    {PROJECT_TYPES.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
                   </select>
                 </div>
 
-                <div className="pt-6 sm:pt-8">
-                  <button type="submit" className="w-full bg-black text-white py-6 font-bold uppercase tracking-architect text-xs hover:bg-bauhaus-red active:scale-[0.98] transition-all">
-                    SUBMIT REQUEST
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-architect opacity-40">INQUIRY</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={inquiry}
+                    onChange={(ev) => setInquiry(ev.target.value)}
+                    className="w-full border-2 border-black p-3 focus:border-bauhaus-red outline-none font-bold uppercase text-sm transition-all resize-y min-h-[100px]"
+                    placeholder="TELL US ABOUT YOUR PROJECT"
+                  />
+                </div>
+
+                {error ? (
+                  <p className="text-bauhaus-red text-xs font-bold uppercase tracking-architect" role="alert">
+                    {error}
+                  </p>
+                ) : null}
+
+                <div className="pt-2 sm:pt-4">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full bg-black text-white py-6 font-bold uppercase tracking-architect text-xs hover:bg-bauhaus-red active:scale-[0.98] transition-all disabled:opacity-60 disabled:pointer-events-none"
+                  >
+                    {submitting ? 'SENDING…' : 'SUBMIT REQUEST'}
                   </button>
                 </div>
               </form>
