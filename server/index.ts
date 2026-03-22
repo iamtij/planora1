@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
@@ -7,6 +8,8 @@ import jwt from 'jsonwebtoken';
 import pg from 'pg';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.join(__dirname, '..');
+const distDir = path.join(projectRoot, 'dist');
 // Load .env from project root (reliable even if cwd is not the repo root)
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 dotenv.config();
@@ -177,15 +180,30 @@ app.get('/api/admin/inquiries', requireAdmin, async (_req, res) => {
   }
 });
 
+if (fs.existsSync(distDir)) {
+  app.use(express.static(distDir));
+  app.use((req, res, next) => {
+    if (req.method !== 'GET' || req.path.startsWith('/api')) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(distDir, 'index.html'));
+  });
+} else {
+  console.warn(
+    'No dist/ folder — run `npm run build` before start in production, or use `npm run dev` locally.'
+  );
+}
+
 ensureSchema()
   .then(() => {
     app.listen(API_PORT, '0.0.0.0', () => {
-      console.log(`API listening on http://localhost:${API_PORT}`);
+      console.log(`Server listening on http://0.0.0.0:${API_PORT}`);
       if (JWT_SECRET && ADMIN_USERNAME && ADMIN_PASSWORD) {
         console.log('Admin login: enabled (POST /api/admin/login)');
       } else {
         console.warn(
-          'Admin login: disabled — set ADMIN_USERNAME, ADMIN_PASSWORD, and ADMIN_JWT_SECRET in .env'
+          'Admin login: not configured (optional). Set ADMIN_USERNAME, ADMIN_PASSWORD, and ADMIN_JWT_SECRET to enable POST /api/admin/login.'
         );
       }
     });
