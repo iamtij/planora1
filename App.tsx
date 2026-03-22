@@ -24,11 +24,11 @@ const App: React.FC = () => {
     <div className="antialiased text-black bg-white overflow-x-hidden">
       <Navbar onOpenBooking={handleOpenBooking} />
       <Hero onOpenBooking={handleOpenBooking} />
-      <Problem />
-      <Solution />
-      <Uses />
-      <About />
-      <FAQ />
+      <Problem onOpenBooking={handleOpenBooking} />
+      <Solution onOpenBooking={handleOpenBooking} />
+      <Uses onOpenBooking={handleOpenBooking} />
+      <About onOpenBooking={handleOpenBooking} />
+      <FAQ onOpenBooking={handleOpenBooking} />
       <Footer onOpenBooking={handleOpenBooking} />
       <BookingModal isOpen={isBookingModalOpen} onClose={handleCloseBooking} />
     </div>

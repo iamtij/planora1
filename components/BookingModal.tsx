@@ -10,6 +10,9 @@ const PROJECT_TYPES = [
   'RESIDENTIAL ARCHITECTURE',
   'COMMERCIAL SPACE',
   'INTERIOR DESIGN',
+  'PHOTOSHOOT',
+  'EVENT',
+  'OTHERS',
 ] as const;
 
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
@@ -89,7 +92,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
 
           {step === 'form' ? (
             <div className="pt-4">
-              <h3 className="text-3xl font-black uppercase tracking-bauhaus mb-2">BOOK A SESSION</h3>
+              <h3 className="text-3xl font-black uppercase tracking-bauhaus mb-2">BOOK STUDIO</h3>
               <p className="text-gray-500 text-sm mb-10 font-medium tracking-wide uppercase">EXPERIENCE YOUR PROJECT AT LIFE SIZE.</p>
               
               <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
@@ -138,8 +141,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
                     rows={4}
                     value={inquiry}
                     onChange={(ev) => setInquiry(ev.target.value)}
-                    className="w-full border-2 border-black p-3 focus:border-bauhaus-red outline-none font-bold uppercase text-sm transition-all resize-y min-h-[100px]"
-                    placeholder="TELL US ABOUT YOUR PROJECT"
+                    className="w-full border-2 border-black p-3 focus:border-bauhaus-red outline-none font-medium text-sm transition-all resize-y min-h-[100px] placeholder:text-gray-400 placeholder:font-normal"
+                    placeholder="Briefly describe your project and when you’d like to visit the studio. If you have preferred days or a time window, include those here."
                   />
                 </div>
 

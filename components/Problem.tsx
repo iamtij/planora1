@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import Reveal from './Reveal';
+import BookStudioCta from './BookStudioCta';
 
-const Problem: React.FC = () => {
+interface ProblemProps {
+  onOpenBooking: () => void;
+}
+
+const Problem: React.FC<ProblemProps> = ({ onOpenBooking }) => {
   const [view, setView] = useState<'2D' | '3D'>('2D');
   const [imgError, setImgError] = useState(false);
 
@@ -27,6 +32,9 @@ const Problem: React.FC = () => {
                   Blueprints are a language for builders, not a feeling for families. We bridge the gap between technical data and human intuition.
                 </p>
               </div>
+              <Reveal delay={120}>
+                <BookStudioCta onOpenBooking={onOpenBooking} className="mt-10 w-full sm:w-auto" />
+              </Reveal>
             </Reveal>
           </div>
 
@@ -48,6 +56,7 @@ const Problem: React.FC = () => {
                 </button>
               </div>
 
+              <Reveal variant="image" className="overflow-hidden">
               <div className="relative mx-auto w-full max-w-full aspect-square md:aspect-[4/3] bg-white border border-black shadow-2xl overflow-hidden group ring-1 ring-black/5">
                 {/* Architectural Grid Background */}
                 <div className="absolute inset-0 architectural-grid opacity-20"></div>
@@ -110,6 +119,7 @@ const Problem: React.FC = () => {
                   </div>
                 </div>
               </div>
+              </Reveal>
             </div>
           </Reveal>
         </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import Reveal from './Reveal';
 import FloorPlan3D from './FloorPlan3D';
+import BookStudioCta from './BookStudioCta';
 
 interface HeroProps {
   onOpenBooking: () => void;
@@ -24,7 +25,7 @@ const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
       <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
         <div className="flex flex-col lg:flex-row items-center lg:items-center justify-between gap-16">
           <div className="max-w-3xl flex-1 w-full">
-            <Reveal>
+            <Reveal priority>
               <h1 className="font-sans text-5xl md:text-7xl lg:text-[90px] font-black leading-[0.88] tracking-bauhaus mb-12 text-black">
                 SEE YOUR <br /> 
                 <span className="text-bauhaus-blue">PLANS</span> AT <br />
@@ -35,19 +36,14 @@ const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
               </h1>
             </Reveal>
 
-            <Reveal delay={100}>
+            <Reveal priority delay={140}>
               <p className="max-w-xl text-lg md:text-xl font-light text-gray-500 mb-16 leading-relaxed border-l border-black/10 pl-8">
                 Turn abstract floor plans into walkable realities. Experience the flow, proportions, and light of your space before construction begins.
               </p>
             </Reveal>
 
-            <Reveal delay={200} className="flex flex-col sm:flex-row flex-wrap gap-6 sm:gap-8 items-center w-full sm:w-auto">
-              <button
-                onClick={onOpenBooking}
-                className="w-full sm:w-auto bg-black text-white px-10 py-5 text-xs font-bold uppercase tracking-architect hover:bg-bauhaus-blue transition-all duration-500 active:scale-95"
-              >
-                BOOK A SESSION
-              </button>
+            <Reveal priority delay={280} className="flex flex-col sm:flex-row flex-wrap gap-6 sm:gap-8 items-center w-full sm:w-auto">
+              <BookStudioCta onOpenBooking={onOpenBooking} className="w-full sm:w-auto" />
               <a
                 href="#solution"
                 onClick={handleScrollToProcess}
@@ -58,8 +54,8 @@ const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
             </Reveal>
           </div>
 
-          <div className="hidden lg:block flex-1 relative">
-            <Reveal delay={300}>
+          <div className="hidden lg:block flex-1 relative overflow-hidden">
+            <Reveal variant="image" priority delay={420}>
               <FloorPlan3D />
             </Reveal>
           </div>

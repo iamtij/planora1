@@ -1,16 +1,84 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+export type RevealVariant = 'fadeUp' | 'fade' | 'image' | 'cta';
+
 interface RevealProps {
   children: React.ReactNode;
-  delay?: number; // in ms
+  delay?: number;
   className?: string;
+  variant?: RevealVariant;
+  /** Above-the-fold: start visible and skip scroll observer */
+  priority?: boolean;
 }
 
-const Reveal: React.FC<RevealProps> = ({ children, delay = 0, className = '' }) => {
-  const [isVisible, setIsVisible] = useState(false);
+const variantConfig: Record<
+  RevealVariant,
+  { hidden: string; visible: string; duration: string; ease: string }
+> = {
+  fadeUp: {
+    hidden: 'opacity-0 translate-y-6',
+    visible: 'opacity-100 translate-y-0',
+    duration: 'duration-[1300ms]',
+    ease: 'ease-out',
+  },
+  fade: {
+    hidden: 'opacity-0',
+    visible: 'opacity-100',
+    duration: 'duration-[1000ms]',
+    ease: 'ease-out',
+  },
+  image: {
+    hidden: 'opacity-0 scale-[1.03]',
+    visible: 'opacity-100 scale-100',
+    duration: 'duration-[1600ms]',
+    ease: 'ease-out',
+  },
+  cta: {
+    hidden: 'opacity-0 translate-y-10',
+    visible: 'opacity-100 translate-y-0',
+    duration: 'duration-[1600ms]',
+    ease: 'ease-[cubic-bezier(0.22,1,0.36,1)]',
+  },
+};
+
+function getPrefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+const Reveal: React.FC<RevealProps> = ({
+  children,
+  delay = 0,
+  className = '',
+  variant = 'fadeUp',
+  priority = false,
+}) => {
+  const [reducedMotion] = useState(() =>
+    typeof window !== 'undefined' ? getPrefersReducedMotion() : false
+  );
+  const [isVisible, setIsVisible] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    // Reduced motion: show immediately. Otherwise start hidden so enter transitions can run.
+    return getPrefersReducedMotion();
+  });
   const ref = useRef<HTMLDivElement>(null);
 
+  /** Priority (e.g. hero): mount hidden, then reveal after paint — otherwise first frame is already "visible" and CSS skips the transition. */
   useEffect(() => {
+    if (!priority || reducedMotion) return;
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setIsVisible(true);
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [priority, reducedMotion]);
+
+  useEffect(() => {
+    if (priority || reducedMotion) {
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -19,27 +87,33 @@ const Reveal: React.FC<RevealProps> = ({ children, delay = 0, className = '' }) 
         }
       },
       {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px', // Trigger slightly before the bottom
+        threshold: 0.08,
+        rootMargin: '0px 0px -40px 0px',
       }
     );
 
-    if (ref.current) {
-      observer.observe(ref.current);
+    const el = ref.current;
+    if (el) {
+      observer.observe(el);
     }
 
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [priority, reducedMotion]);
+
+  const cfg = variantConfig[variant];
+  const motionSafe = !reducedMotion;
 
   return (
     <div
       ref={ref}
-      className={`transition-all duration-1000 cubic-bezier(0.5, 0, 0, 1) transform ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      } ${className}`}
-      style={{ transitionDelay: `${delay}ms` }}
+      className={`transform transition-all ${motionSafe ? cfg.duration : 'duration-0'} ${
+        motionSafe ? cfg.ease : ''
+      } ${motionSafe ? '' : 'transition-none'} ${isVisible ? cfg.visible : cfg.hidden} ${className}`}
+      style={{
+        transitionDelay: motionSafe && isVisible ? `${delay}ms` : '0ms',
+      }}
     >
       {children}
     </div>

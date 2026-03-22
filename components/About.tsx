@@ -1,18 +1,27 @@
 import React from 'react';
 import Reveal from './Reveal';
 import Logo from './Logo';
+import BookStudioCta from './BookStudioCta';
 
-const About: React.FC = () => {
+interface AboutProps {
+  onOpenBooking: () => void;
+}
+
+const About: React.FC<AboutProps> = ({ onOpenBooking }) => {
   return (
     <section id="about" className="py-24 md:py-48 bg-white relative overflow-hidden">
       {/* Decorative architectural lines */}
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-black/5"></div>
-      <div className="absolute bottom-0 left-0 w-full h-[1px] bg-black/5"></div>
+      <Reveal variant="fade" className="absolute top-0 left-0 w-full pointer-events-none z-10">
+        <div className="h-px w-full bg-black/5" />
+      </Reveal>
+      <Reveal variant="fade" className="absolute bottom-0 left-0 w-full pointer-events-none z-10">
+        <div className="h-px w-full bg-black/5" />
+      </Reveal>
       <div className="absolute left-[10%] top-0 w-[1px] h-full bg-black/[0.02]"></div>
       
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-32 items-center">
-          <Reveal>
+          <Reveal variant="image" className="overflow-hidden">
             <div className="relative group">
               <div className="absolute -inset-4 bg-bauhaus-yellow/5 scale-95 group-hover:scale-100 transition-transform duration-700 -z-10"></div>
               <Logo className="w-full h-auto max-w-[400px] mx-auto lg:mx-0 drop-shadow-2xl" />
@@ -65,6 +74,10 @@ const About: React.FC = () => {
                   <div className="text-[10px] font-bold uppercase tracking-architect text-gray-400">ACCURACY RATIO</div>
                 </div>
               </div>
+            </Reveal>
+
+            <Reveal delay={500}>
+              <BookStudioCta onOpenBooking={onOpenBooking} className="mt-4 w-full sm:w-auto" />
             </Reveal>
           </div>
         </div>

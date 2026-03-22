@@ -1,6 +1,11 @@
 import React from 'react';
 import { Camera, Projector, Coffee } from 'lucide-react';
 import Reveal from './Reveal';
+import BookStudioCta from './BookStudioCta';
+
+interface UsesProps {
+  onOpenBooking: () => void;
+}
 
 const GraphPaperPanel: React.FC = () => (
   <div
@@ -22,7 +27,7 @@ const GraphPaperPanel: React.FC = () => (
 
     <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-6xl mx-auto">
       {/* Photoshoot studio */}
-      <Reveal delay={80}>
+      <Reveal delay={0}>
         <div className="bg-black text-white p-8 md:p-10 flex flex-col items-center text-center min-h-[320px] md:min-h-[340px]">
           <div className="w-28 h-24 mb-8 flex items-center justify-center" aria-hidden>
             <svg viewBox="0 0 120 100" className="w-full h-full" fill="none">
@@ -52,7 +57,7 @@ const GraphPaperPanel: React.FC = () => (
       </Reveal>
 
       {/* Interactive projection */}
-      <Reveal delay={160}>
+      <Reveal delay={100}>
         <div className="bg-black text-white p-8 md:p-10 flex flex-col items-center text-center min-h-[320px] md:min-h-[340px]">
           <div className="w-28 h-24 mb-8 flex items-center justify-center" aria-hidden>
             <svg viewBox="0 0 120 100" className="w-full h-full">
@@ -96,7 +101,7 @@ const GraphPaperPanel: React.FC = () => (
       </Reveal>
 
       {/* Events */}
-      <Reveal delay={240}>
+      <Reveal delay={200}>
         <div className="bg-black text-white p-8 md:p-10 flex flex-col items-center text-center min-h-[320px] md:min-h-[340px]">
           <div className="w-28 h-24 mb-8 flex items-center justify-center" aria-hidden>
             <svg viewBox="0 0 120 100" className="w-full h-full">
@@ -132,12 +137,16 @@ const GraphPaperPanel: React.FC = () => (
   </div>
 );
 
-const Uses: React.FC = () => {
+const Uses: React.FC<UsesProps> = ({ onOpenBooking }) => {
   return (
     <section id="uses" className="py-24 md:py-40 bg-white scroll-mt-24 relative overflow-hidden">
       {/* Precision indicators */}
-      <div className="absolute top-0 left-0 w-full h-[0.5px] bg-black/5"></div>
-      <div className="absolute bottom-0 left-0 w-full h-[0.5px] bg-black/5"></div>
+      <Reveal variant="fade" className="absolute top-0 left-0 w-full pointer-events-none z-10">
+        <div className="h-[0.5px] w-full bg-black/5" />
+      </Reveal>
+      <Reveal variant="fade" className="absolute bottom-0 left-0 w-full pointer-events-none z-10">
+        <div className="h-[0.5px] w-full bg-black/5" />
+      </Reveal>
       
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col md:flex-row gap-12 mb-24 items-start">
@@ -160,7 +169,7 @@ const Uses: React.FC = () => {
             { icon: Projector, title: "Designed for Possibilities", color: "bg-bauhaus-red", desc: "Planorama is an immersive space for real estate presentations, interior planning, and construction coordination, while also serving as a studio for photoshoots, events, and product launches." },
             { icon: Coffee, title: "WORKSHOP", color: "bg-bauhaus-yellow", desc: "A neutral ground for architects, builders, and owners to finalize decisions collaboratively." }
           ].map((item, i) => (
-            <Reveal key={i} delay={i * 100}>
+            <Reveal key={i} delay={i * 120}>
               <div className="group border border-gray-100 bg-white p-10 hover:border-black transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
                 <div className={`w-10 h-10 ${item.color} flex items-center justify-center mb-8 text-white group-hover:scale-110 transition-transform`}>
                   <item.icon size={18} />
@@ -181,6 +190,11 @@ const Uses: React.FC = () => {
             </h2>
           </Reveal>
           <GraphPaperPanel />
+          <div className="mt-12 md:mt-16 flex justify-center">
+            <Reveal delay={100}>
+              <BookStudioCta onOpenBooking={onOpenBooking} />
+            </Reveal>
+          </div>
         </div>
       </div>
     </section>

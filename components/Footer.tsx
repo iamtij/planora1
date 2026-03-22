@@ -1,6 +1,7 @@
 import React from 'react';
 import Reveal from './Reveal';
 import Logo from './Logo';
+import BookStudioCta from './BookStudioCta';
 
 interface FooterProps {
   onOpenBooking: () => void;
@@ -8,39 +9,31 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = ({ onOpenBooking }) => {
   return (
-    <footer id="contact" className="bg-bauhaus-beige pt-24 pb-12 scroll-mt-24 border-t border-black/5">
+    <footer id="contact" className="relative bg-bauhaus-beige pt-24 pb-12 scroll-mt-24">
+      <Reveal variant="fade" className="absolute top-0 left-0 w-full pointer-events-none z-10">
+        <div className="h-px w-full bg-black/5" />
+      </Reveal>
       <div className="max-w-7xl mx-auto px-6">
         
-        <div className="grid lg:grid-cols-2 gap-20 mb-32">
-          <Reveal className="w-full">
-            <h2 className="text-6xl md:text-8xl font-black uppercase tracking-bauhaus leading-[0.85] mb-12 text-black">
-              READY TO <br /> <span className="text-bauhaus-red italic">WALK</span> IT?
-            </h2>
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-              <button 
-                onClick={onOpenBooking}
-                className="w-full sm:w-auto bg-bauhaus-red text-white px-10 py-5 text-xs font-bold uppercase tracking-architect hover:bg-black transition-all duration-300 active:scale-95"
-              >
-                BOOK SESSION
-              </button>
-              <button 
-                onClick={onOpenBooking}
-                className="w-full sm:w-auto bg-transparent border-2 border-black text-black px-10 py-5 text-xs font-bold uppercase tracking-architect hover:bg-black hover:text-white transition-all duration-300 active:scale-95"
-              >
-                VISIT STUDIO
-              </button>
+        <Reveal variant="cta" className="w-full">
+          <div className="grid lg:grid-cols-2 gap-20 mb-32">
+            <div className="w-full">
+              <h2 className="text-6xl md:text-8xl font-black uppercase tracking-bauhaus leading-[0.85] mb-12 text-black">
+                READY TO <br /> <span className="text-bauhaus-red italic">WALK</span> IT?
+              </h2>
+              <BookStudioCta onOpenBooking={onOpenBooking} className="w-full sm:w-auto" />
             </div>
-          </Reveal>
 
-          <Reveal delay={200} className="flex flex-col justify-end">
-            <div className="border-l-2 border-black pl-8">
-              <p className="text-xl font-bold uppercase tracking-bauhaus text-black">
-                10B DON ALFREDO EGEA ST. <br />
-                QUEZON CITY
-              </p>
+            <div className="flex flex-col justify-end">
+              <div className="border-l-2 border-black pl-8">
+                <p className="text-xl font-bold uppercase tracking-bauhaus text-black">
+                  10B DON ALFREDO EGEA ST. <br />
+                  QUEZON CITY
+                </p>
+              </div>
             </div>
-          </Reveal>
-        </div>
+          </div>
+        </Reveal>
 
         <div className="border-t border-black/10 pt-12 flex items-center text-[10px] font-bold uppercase tracking-architect text-gray-400">
           <div className="flex items-center gap-6">

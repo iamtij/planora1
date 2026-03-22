@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import Reveal from './Reveal';
+import BookStudioCta from './BookStudioCta';
 
-const FAQ: React.FC = () => {
+interface FAQProps {
+  onOpenBooking: () => void;
+}
+
+const FAQ: React.FC<FAQProps> = ({ onOpenBooking }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const questions = [
@@ -33,7 +38,10 @@ const FAQ: React.FC = () => {
   };
 
   return (
-    <section id="faq" className="py-24 md:py-40 bg-white scroll-mt-24 border-t border-black/5">
+    <section id="faq" className="relative py-24 md:py-40 bg-white scroll-mt-24">
+      <Reveal variant="fade" className="absolute top-0 left-0 w-full pointer-events-none z-10">
+        <div className="h-px w-full bg-black/5" />
+      </Reveal>
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid lg:grid-cols-12 gap-16 lg:gap-24">
           
@@ -53,7 +61,7 @@ const FAQ: React.FC = () => {
           <div className="lg:col-span-8">
             <div className="border-t border-black">
               {questions.map((item, i) => (
-                <Reveal key={i} delay={i * 50}>
+                <Reveal key={i} delay={i * 70}>
                   <div className="border-b border-black/10">
                     <button 
                       onClick={() => toggle(i)}
@@ -90,17 +98,12 @@ const FAQ: React.FC = () => {
 
             {/* Bottom Contact Hint */}
             <Reveal delay={400} className="mt-16">
-              <div className="bg-bauhaus-beige p-8 md:p-12 border border-black/5 flex flex-col md:flex-row justify-between items-center gap-8">
+              <div className="bg-bauhaus-beige p-8 md:p-12 border border-black/5 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
                 <div>
                   <h4 className="font-black uppercase tracking-architect mb-2">Still have questions?</h4>
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-widest">Our spatial consultants are available for a call.</p>
                 </div>
-                <a 
-                  href="#contact" 
-                  className="text-xs font-black uppercase tracking-architect border-b-2 border-black pb-1 hover:text-bauhaus-blue hover:border-bauhaus-blue transition-colors"
-                >
-                  GET IN TOUCH
-                </a>
+                <BookStudioCta onOpenBooking={onOpenBooking} className="w-full sm:w-auto shrink-0" />
               </div>
             </Reveal>
           </div>

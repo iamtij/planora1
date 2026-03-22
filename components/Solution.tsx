@@ -1,7 +1,12 @@
 import React from 'react';
 import Reveal from './Reveal';
+import BookStudioCta from './BookStudioCta';
 
-const Solution: React.FC = () => {
+interface SolutionProps {
+  onOpenBooking: () => void;
+}
+
+const Solution: React.FC<SolutionProps> = ({ onOpenBooking }) => {
   const steps = [
     {
       id: "01",
@@ -36,8 +41,12 @@ const Solution: React.FC = () => {
     <section id="solution" className="py-32 md:py-56 bg-white text-black scroll-mt-24 relative overflow-hidden">
       {/* Subtle architectural depth */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.02] architectural-grid"></div>
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-black/5"></div>
-      <div className="absolute bottom-0 left-0 w-full h-[1px] bg-black/5"></div>
+      <Reveal variant="fade" className="absolute top-0 left-0 w-full pointer-events-none z-10">
+        <div className="h-px w-full bg-black/5" />
+      </Reveal>
+      <Reveal variant="fade" className="absolute bottom-0 left-0 w-full pointer-events-none z-10">
+        <div className="h-px w-full bg-black/5" />
+      </Reveal>
 
       <div className="max-w-7xl mx-auto px-6 mb-24 md:mb-32">
         <Reveal>
@@ -50,7 +59,7 @@ const Solution: React.FC = () => {
 
       <div className="max-w-[1400px] mx-auto px-6 grid lg:grid-cols-3 gap-8 md:gap-4 lg:gap-0 border-y border-black/10">
         {steps.map((step, i) => (
-          <Reveal key={step.id} delay={i * 200} className="lg:border-r border-black/10 last:border-0 h-full">
+          <Reveal key={step.id} delay={i * 120} className="lg:border-r border-black/10 last:border-0 h-full">
             <div className="group relative h-full min-h-[500px] flex flex-col p-12 md:p-16 transition-all duration-700 hover:bg-black overflow-hidden cursor-pointer">
               
               {/* Massive Background Number */}
@@ -98,6 +107,12 @@ const Solution: React.FC = () => {
             </div>
           </Reveal>
         ))}
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 mt-16 md:mt-20 flex justify-center">
+        <Reveal delay={80}>
+          <BookStudioCta onOpenBooking={onOpenBooking} />
+        </Reveal>
       </div>
 
       {/* Decorative Human-Centric Detail */}
