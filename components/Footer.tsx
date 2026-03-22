@@ -35,8 +35,8 @@ const Footer: React.FC<FooterProps> = ({ onOpenBooking }) => {
           <Reveal delay={200} className="flex flex-col justify-end">
             <div className="border-l-2 border-black pl-8">
               <p className="text-xl font-bold uppercase tracking-bauhaus text-black">
-                1024 INDUSTRIAL PARK DR. <br />
-                SUITE 400, BERLIN 10117
+                10B DON ALFREDO EGEA ST. <br />
+                QUEZON CITY
               </p>
             </div>
           </Reveal>

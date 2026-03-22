@@ -34,29 +34,35 @@ const About: React.FC = () => {
             </Reveal>
 
             <Reveal delay={300}>
-              <div className="space-y-8">
-                <p className="text-xl font-light text-gray-500 leading-relaxed">
-                  Founded at the intersection of architecture and human psychology, Planorama Studios was born from a simple observation: <span className="text-black font-medium">Humans do not live in two dimensions.</span>
-                </p>
-                <p className="text-lg font-light text-gray-500 leading-relaxed border-l-4 border-bauhaus-red pl-8">
-                  Our mission is to democratize architectural spatial awareness. By projecting blueprints at a perfect 1:1 scale, we empower homeowners and designers to reclaim the physical connection to their future environments before a single brick is laid.
-                </p>
+              <div className="space-y-10">
+                <div>
+                  <h3 className="text-[10px] font-mono font-bold tracking-[0.45em] uppercase text-black/45 mb-4">
+                    Vision
+                  </h3>
+                  <p className="text-xl font-light text-gray-500 leading-relaxed">
+                    To redefine architectural decision-making through immersive, life-size visualization that transforms drawings into real spatial experiences.
+                  </p>
+                </div>
+                <div className="border-l-4 border-bauhaus-red pl-8">
+                  <h3 className="text-[10px] font-mono font-bold tracking-[0.45em] uppercase text-black/45 mb-4">
+                    Mission
+                  </h3>
+                  <p className="text-lg font-light text-gray-500 leading-relaxed">
+                    Planorama Studios delivers accurate full-scale projection services that empower architects, designers, and clients to elevate the design process, visualize spaces clearly, streamline planning, and achieve better-built outcomes.
+                  </p>
+                </div>
               </div>
             </Reveal>
 
             <Reveal delay={400}>
               <div className="flex flex-wrap gap-12 pt-8">
                 <div>
-                  <div className="text-3xl font-black text-black mb-1">500m²</div>
+                  <div className="text-3xl font-black text-black mb-1">12m x 12m</div>
                   <div className="text-[10px] font-bold uppercase tracking-architect text-gray-400">PROJECTION FLOOR</div>
                 </div>
                 <div>
                   <div className="text-3xl font-black text-black mb-1">1:1</div>
                   <div className="text-[10px] font-bold uppercase tracking-architect text-gray-400">ACCURACY RATIO</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-black text-black mb-1">0%</div>
-                  <div className="text-[10px] font-bold uppercase tracking-architect text-gray-400">SPATIAL DOUBT</div>
                 </div>
               </div>
             </Reveal>

@@ -19,15 +19,15 @@ const Uses: React.FC = () => {
           </Reveal>
           <Reveal delay={100} className="flex-1 pt-4">
             <p className="text-xl font-light text-gray-500 leading-relaxed border-l border-black pl-8">
-              Our 500sqm projection floor serves as a physical bridge between your computer screen and your future home. Experience the true volume of your project.
+              Our 12m x 12m projection floor serves as a physical bridge between your computer screen and your future home. Experience the true volume of your project.
             </p>
           </Reveal>
         </div>
 
         <div className="grid md:grid-cols-3 gap-12 relative z-10">
           {[
-            { icon: Camera, title: "STAGING", color: "bg-bauhaus-blue", desc: "Bring physical props or mark layouts to test real furniture clearances and comfort." },
-            { icon: Projector, title: "PRECISION", color: "bg-bauhaus-red", desc: "Our high-output laser systems project every wall and window with millimeter accuracy." },
+            { icon: Camera, title: "STAGING", color: "bg-bauhaus-blue", desc: "Enhance your walkthrough with physical mock-ups including doors, sofas, kitchen cabinets, and more—available upon request" },
+            { icon: Projector, title: "Designed for Possibilities", color: "bg-bauhaus-red", desc: "Planorama is an immersive space for real estate presentations, interior planning, and construction coordination, while also serving as a studio for photoshoots, events, and product launches." },
             { icon: Coffee, title: "WORKSHOP", color: "bg-bauhaus-yellow", desc: "A neutral ground for architects, builders, and owners to finalize decisions collaboratively." }
           ].map((item, i) => (
             <Reveal key={i} delay={i * 100}>

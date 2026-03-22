@@ -3,29 +3,29 @@ import Reveal from './Reveal';
 
 const Solution: React.FC = () => {
   const steps = [
-    { 
+    {
       id: "01",
-      title: "SHARE_YOUR", 
-      label: "VISION",
-      desc: "Upload your concepts or sketches. We transform your abstract lines into a physical stage where your future daily life begins to take shape.",
+      title: "BRING YOUR PLANS TO",
+      label: "LIFE",
+      desc: "Upload your CAD drawings and/or 3D models. We prepare your project for full-scale projection.",
       color: "bg-bauhaus-blue",
       accent: "text-bauhaus-blue",
       symbol: "◤"
     },
-    { 
+    {
       id: "02",
-      title: "THE_FIRST", 
-      label: "STEP",
-      desc: "Step onto the floor and feel the sunlight, the distance between walls, and the rhythm of the rooms. Experience your home with your own body.",
+      title: "WALK THROUGH YOUR",
+      label: "SPACE",
+      desc: "Experience your design at near life-size. Understand proportions, layouts, and flow—just like in real life.",
       color: "bg-bauhaus-red",
       accent: "text-bauhaus-red",
       symbol: "◢"
     },
-    { 
+    {
       id: "03",
-      title: "CRAFT_WITH", 
-      label: "INSTINCT",
-      desc: "If a corner feels tight or a view feels blocked, we move the walls in real-time. Trust your intuition over the blueprint lines.",
+      title: "BUILD WITH",
+      label: "CERTAINTY",
+      desc: "Finalize decisions with clarity, minimizing risks, errors, and redesign costs.",
       color: "bg-bauhaus-yellow",
       accent: "text-bauhaus-yellow",
       symbol: "◥"
@@ -41,22 +41,10 @@ const Solution: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-6 mb-24 md:mb-32">
         <Reveal>
-          <div className="relative inline-block">
-            <h2 className="text-5xl md:text-8xl font-black uppercase tracking-bauhaus leading-[0.85] mb-6">
-              THREE STEPS <br />
-              <span className="text-bauhaus-red italic">TO CERTAINTY.</span>
-            </h2>
-            <div className="absolute -right-12 top-0 text-bauhaus-blue font-mono text-xl">●</div>
-          </div>
-        </Reveal>
-        
-        <Reveal delay={200}>
-          <div className="mt-12 flex items-center gap-8">
-            <div className="w-24 h-[1px] bg-black/20"></div>
-            <p className="text-[10px] font-mono font-bold tracking-[0.4em] uppercase opacity-40">
-              THE_HUMAN_EXPERIENCE // ARCHITECTURAL_JOURNEY
-            </p>
-          </div>
+          <h2 className="font-sans text-5xl md:text-7xl font-black uppercase tracking-bauhaus leading-[0.85]">
+            3 STEPS TO <br />
+            <span className="text-bauhaus-red italic">CERTAINTY.</span>
+          </h2>
         </Reveal>
       </div>
 
@@ -79,9 +67,6 @@ const Solution: React.FC = () => {
               </div>
 
               <div className="relative z-10 flex-1">
-                <span className="inline-block text-[10px] font-mono font-bold tracking-[0.5em] text-gray-400 group-hover:text-white/40 mb-4 uppercase transition-colors">
-                  MOMENT_0{i+1}
-                </span>
                 <h3 className="text-4xl md:text-5xl font-black uppercase tracking-bauhaus leading-none mb-8 group-hover:text-white transition-colors">
                   {step.title} <br />
                   <span className={`italic transition-colors ${step.accent} group-hover:text-white`}>
@@ -114,7 +99,7 @@ const Solution: React.FC = () => {
         <div className="font-mono text-[8px] space-y-1 uppercase tracking-widest">
           <div>Scale: 1:1 Actual Size</div>
           <div>Human Centric Design</div>
-          <div>Location: Berlin Studio</div>
+          <div>Location: Quezon City</div>
         </div>
         <div className="flex gap-4">
             <div className="w-1.5 h-1.5 rounded-full bg-bauhaus-red"></div>

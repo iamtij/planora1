@@ -8,14 +8,14 @@ const Problem: React.FC = () => {
   return (
     <section id="problem" className="py-24 md:py-48 bg-bauhaus-beige border-y border-black/5 scroll-mt-24 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-20 items-center">
-          <div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 lg:gap-12 xl:gap-20 lg:items-start xl:items-center">
+          <div className="min-w-0 max-w-full">
             <Reveal>
-              <h2 className="text-5xl md:text-8xl font-black mb-12 leading-[0.85] tracking-bauhaus uppercase">
+              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black mb-8 md:mb-12 leading-[0.9] sm:leading-[0.85] tracking-bauhaus uppercase break-words">
                 STOP BUILDING <br />
-                BY <span className="text-bauhaus-red inline-block">GUESSWORK.</span>
+                BY <span className="text-bauhaus-red block sm:inline">GUESSWORK.</span>
               </h2>
-              <div className="space-y-8 text-xl font-light text-gray-600 leading-relaxed max-w-xl">
+              <div className="space-y-8 text-base sm:text-lg md:text-xl font-light text-gray-600 leading-relaxed max-w-xl">
                 <p>
                   Most homeowners commit to their life's biggest investment based on <span className="text-black font-bold">abstract lines</span> and static renders. 
                 </p>
@@ -29,10 +29,10 @@ const Problem: React.FC = () => {
             </Reveal>
           </div>
 
-          <Reveal delay={200}>
-            <div className="relative">
-              {/* View Toggle - Bauhaus Style */}
-              <div className="absolute -top-14 left-0 z-20 flex bg-white border border-black p-1 shadow-sm">
+          <Reveal delay={200} className="min-w-0 w-full">
+            <div className="relative w-full max-w-full">
+              {/* View Toggle - in document flow so it cannot overlap the fixed navbar */}
+              <div className="mb-4 flex w-fit bg-white border border-black p-1 shadow-sm">
                 <button 
                   onClick={() => setView('2D')}
                   className={`px-6 py-2 text-[10px] font-mono font-black transition-all ${view === '2D' ? 'bg-black text-white' : 'bg-transparent text-black hover:bg-gray-100'}`}
@@ -47,12 +47,12 @@ const Problem: React.FC = () => {
                 </button>
               </div>
 
-              <div className="relative aspect-square md:aspect-[4/3] bg-white border border-black shadow-2xl overflow-hidden group ring-1 ring-black/5">
+              <div className="relative mx-auto w-full max-w-full aspect-square md:aspect-[4/3] bg-white border border-black shadow-2xl overflow-hidden group ring-1 ring-black/5">
                 {/* Architectural Grid Background */}
                 <div className="absolute inset-0 architectural-grid opacity-20"></div>
                 
                 {/* 2D View */}
-                <div className={`absolute inset-0 p-12 flex items-center justify-center transition-all duration-700 ease-in-out ${view === '2D' ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-110 rotate-3 pointer-events-none blur-sm'}`}>
+                <div className={`absolute inset-0 p-6 sm:p-8 md:p-12 flex items-center justify-center transition-all duration-700 ease-in-out ${view === '2D' ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-110 rotate-3 pointer-events-none blur-sm'}`}>
                   <svg viewBox="0 0 400 500" className="w-full h-full text-black">
                     <path d="M50 50 L350 50 L350 450 L50 450 Z" fill="none" stroke="currentColor" strokeWidth="4" />
                     <path d="M50 200 L200 200 L200 50" fill="none" stroke="currentColor" strokeWidth="2" />

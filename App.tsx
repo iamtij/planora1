@@ -5,7 +5,6 @@ import Problem from './components/Problem';
 import Solution from './components/Solution';
 import About from './components/About';
 import Uses from './components/Uses';
-import Testimonial from './components/Testimonial';
 import FAQ from './components/FAQ';
 import Footer from './components/Footer';
 import BookingModal from './components/BookingModal';
@@ -29,7 +28,6 @@ const App: React.FC = () => {
       <Solution />
       <Uses />
       <About />
-      <Testimonial />
       <FAQ />
       <Footer onOpenBooking={handleOpenBooking} />
       <BookingModal isOpen={isBookingModalOpen} onClose={handleCloseBooking} />

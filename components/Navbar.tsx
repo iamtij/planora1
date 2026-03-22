@@ -60,13 +60,13 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenBooking }) => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6">
-        <div className="flex justify-between items-center h-10">
+        <div className="flex justify-between items-center min-h-16">
           <a 
             href="#top" 
             onClick={(e) => scrollToSection(e, '#top')}
-            className="hover:opacity-70 transition-opacity p-1 relative z-[110]"
+            className="hover:opacity-70 transition-opacity p-1 relative z-[110] flex items-center"
           >
-            <Logo className="h-6 md:h-7" />
+            <Logo className="h-14 md:h-16" />
           </a>
 
           {/* Desktop Menu */}
