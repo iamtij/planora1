@@ -5,27 +5,27 @@ const Solution: React.FC = () => {
   const steps = [
     { 
       id: "01",
-      title: "SHARE_YOUR", 
-      label: "VISION",
-      desc: "Upload your concepts or sketches. We transform your abstract lines into a physical stage where your future daily life begins to take shape.",
+      title: "Bring Your Plans", 
+      label: "to Life",
+      desc: "Upload your CAD drawings and/or 3D models. We prepare your project for full-scale projection.",
       color: "bg-bauhaus-blue",
       accent: "text-bauhaus-blue",
       symbol: "◤"
     },
     { 
       id: "02",
-      title: "THE_FIRST", 
-      label: "STEP",
-      desc: "Step onto the floor and feel the sunlight, the distance between walls, and the rhythm of the rooms. Experience your home with your own body.",
+      title: "Walk Through", 
+      label: "Your Space",
+      desc: "Experience your design at near life-size. Understand proportions, layouts, and flow—just like in real life.",
       color: "bg-bauhaus-red",
       accent: "text-bauhaus-red",
       symbol: "◢"
     },
     { 
       id: "03",
-      title: "CRAFT_WITH", 
-      label: "INSTINCT",
-      desc: "If a corner feels tight or a view feels blocked, we move the walls in real-time. Trust your intuition over the blueprint lines.",
+      title: "Build with", 
+      label: "Certainty",
+      desc: "Finalize decisions with clarity, minimizing risks, errors, and redesign costs.",
       color: "bg-bauhaus-yellow",
       accent: "text-bauhaus-yellow",
       symbol: "◥"
@@ -43,8 +43,8 @@ const Solution: React.FC = () => {
         <Reveal>
           <div className="relative inline-block">
             <h2 className="text-5xl md:text-8xl font-black uppercase tracking-bauhaus leading-[0.85] mb-6">
-              THREE STEPS <br />
-              <span className="text-bauhaus-red italic">TO CERTAINTY.</span>
+              3 STEPS <br />
+              <span className="text-bauhaus-red italic">TO CERTAINTY</span>
             </h2>
             <div className="absolute -right-12 top-0 text-bauhaus-blue font-mono text-xl">●</div>
           </div>
