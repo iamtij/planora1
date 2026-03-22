@@ -8,6 +8,7 @@ export type InquiryRow = {
   id: number;
   name: string;
   email: string;
+  mobile: string | null;
   type: string;
   inquiry: string;
   created_at: string;
@@ -144,7 +145,7 @@ const Admin: React.FC = () => {
     let list = rows;
     if (q) {
       list = rows.filter((r) => {
-        const hay = [r.id, r.name, r.email, r.type, r.inquiry, formatDate(r.created_at)]
+        const hay = [r.id, r.name, r.email, r.mobile ?? '', r.type, r.inquiry, formatDate(r.created_at)]
           .join(' ')
           .toLowerCase();
         return hay.includes(q);
@@ -161,8 +162,8 @@ const Admin: React.FC = () => {
         va = new Date(a.created_at).getTime();
         vb = new Date(b.created_at).getTime();
       } else {
-        va = String(va).toLowerCase();
-        vb = String(vb).toLowerCase();
+        va = String(va ?? '').toLowerCase();
+        vb = String(vb ?? '').toLowerCase();
       }
       if (va < vb) return -1 * dir;
       if (va > vb) return 1 * dir;
@@ -277,6 +278,7 @@ const Admin: React.FC = () => {
                       ['id', 'ID'],
                       ['name', 'Name'],
                       ['email', 'Email'],
+                      ['mobile', 'Mobile'],
                       ['type', 'Type'],
                       ['inquiry', 'Inquiry'],
                       ['created_at', 'Created'],
@@ -298,7 +300,7 @@ const Admin: React.FC = () => {
               <tbody>
                 {filteredSorted.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-black/50 font-mono text-xs">
+                    <td colSpan={7} className="p-8 text-center text-black/50 font-mono text-xs">
                       {rows.length === 0 ? 'No inquiries yet.' : 'No rows match your search.'}
                     </td>
                   </tr>
@@ -308,6 +310,9 @@ const Admin: React.FC = () => {
                       <td className="p-3 font-mono text-xs align-top">{r.id}</td>
                       <td className="p-3 font-bold uppercase text-xs align-top max-w-[140px] break-words">{r.name}</td>
                       <td className="p-3 font-mono text-xs align-top max-w-[200px] break-all">{r.email}</td>
+                      <td className="p-3 font-mono text-xs align-top max-w-[140px] whitespace-pre-wrap break-words">
+                        {r.mobile ?? '—'}
+                      </td>
                       <td className="p-3 uppercase text-xs align-top max-w-[160px]">{r.type}</td>
                       <td className="p-3 text-xs align-top max-w-md whitespace-pre-wrap break-words" title={r.inquiry}>
                         {r.inquiry}

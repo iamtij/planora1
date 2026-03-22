@@ -13,7 +13,9 @@
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:check": "node scripts/db-check.mjs",
-    "db:migrate:railway": "bash scripts/railway-migrate.sh"
+    "db:migrate": "node scripts/db-migrate.mjs local",
+    "db:migrate:local": "node scripts/db-migrate.mjs local",
+    "db:migrate:railway": "node scripts/db-migrate.mjs railway"
   },
   "dependencies": {
     "cors": "^2.8.5",

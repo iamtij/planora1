@@ -27,9 +27,9 @@ const About: React.FC<AboutProps> = ({ onOpenBooking }) => {
               <Logo className="w-full h-auto max-w-[400px] mx-auto lg:mx-0 drop-shadow-2xl" />
               
               <div className="mt-12 grid grid-cols-3 gap-4 max-w-[400px]">
+                <div className="h-1 bg-bauhaus-yellow"></div>
                 <div className="h-1 bg-bauhaus-red"></div>
                 <div className="h-1 bg-bauhaus-blue"></div>
-                <div className="h-1 bg-bauhaus-yellow"></div>
               </div>
             </div>
           </Reveal>

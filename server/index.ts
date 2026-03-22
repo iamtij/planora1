@@ -70,6 +70,9 @@ async function ensureSchema() {
     );
   `);
   await pool.query(`
+    ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS mobile TEXT;
+  `);
+  await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_inquiries_created_at ON inquiries (created_at DESC);
   `);
 }
@@ -103,7 +106,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.post('/api/inquiries', async (req, res) => {
-  const { name, email, type, inquiry } = req.body ?? {};
+  const { name, email, type, inquiry, mobile } = req.body ?? {};
 
   if (
     typeof name !== 'string' ||
@@ -115,15 +118,24 @@ app.post('/api/inquiries', async (req, res) => {
     return;
   }
 
+  if (mobile != null && typeof mobile !== 'string') {
+    res.status(400).json({ error: 'Invalid payload' });
+    return;
+  }
+
   const trimmed = {
     name: name.trim(),
     email: email.trim(),
     type: type.trim(),
     inquiry: inquiry.trim(),
+    mobile:
+      typeof mobile === 'string' && mobile.trim() !== ''
+        ? mobile.trim().slice(0, 40)
+        : null,
   };
 
   if (!trimmed.name || !trimmed.email || !trimmed.type || !trimmed.inquiry) {
-    res.status(400).json({ error: 'All fields are required' });
+    res.status(400).json({ error: 'Name, email, project type, and inquiry are required' });
     return;
   }
 
@@ -132,14 +144,15 @@ app.post('/api/inquiries', async (req, res) => {
       id: number;
       name: string;
       email: string;
+      mobile: string | null;
       type: string;
       inquiry: string;
       created_at: string;
     }>(
-      `INSERT INTO inquiries (name, email, type, inquiry)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, name, email, type, inquiry, created_at`,
-      [trimmed.name, trimmed.email, trimmed.type, trimmed.inquiry]
+      `INSERT INTO inquiries (name, email, mobile, type, inquiry)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, name, email, mobile, type, inquiry, created_at`,
+      [trimmed.name, trimmed.email, trimmed.mobile, trimmed.type, trimmed.inquiry]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -175,11 +188,12 @@ app.get('/api/admin/inquiries', requireAdmin, async (_req, res) => {
       id: number;
       name: string;
       email: string;
+      mobile: string | null;
       type: string;
       inquiry: string;
       created_at: Date;
     }>(
-      `SELECT id, name, email, type, inquiry, created_at
+      `SELECT id, name, email, mobile, type, inquiry, created_at
        FROM inquiries
        ORDER BY created_at DESC`
     );

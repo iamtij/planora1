@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS inquiries (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT NOT NULL,
+  mobile TEXT,
   type TEXT NOT NULL,
   inquiry TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

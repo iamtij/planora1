@@ -123,9 +123,9 @@ const Solution: React.FC<SolutionProps> = ({ onOpenBooking }) => {
           <div>Location: Quezon City</div>
         </div>
         <div className="flex gap-4">
+            <div className="w-1.5 h-1.5 rounded-full bg-bauhaus-yellow"></div>
             <div className="w-1.5 h-1.5 rounded-full bg-bauhaus-red"></div>
             <div className="w-1.5 h-1.5 rounded-full bg-bauhaus-blue"></div>
-            <div className="w-1.5 h-1.5 rounded-full bg-bauhaus-yellow"></div>
         </div>
       </div>
 

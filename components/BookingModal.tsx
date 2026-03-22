@@ -20,6 +20,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [mobile, setMobile] = useState('');
   const [type, setType] = useState<string>(PROJECT_TYPES[0]);
   const [inquiry, setInquiry] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -31,6 +32,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
       setIsClosing(false);
       setName('');
       setEmail('');
+      setMobile('');
       setType(PROJECT_TYPES[0]);
       setInquiry('');
       setSubmitting(false);
@@ -60,6 +62,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
         body: JSON.stringify({
           name,
           email,
+          mobile: mobile.trim() || undefined,
           type,
           inquiry,
         }),
@@ -98,27 +101,51 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
               <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-architect opacity-40">NAME</label>
+                    <label className="text-[10px] font-bold uppercase tracking-architect opacity-40">
+                      NAME <span className="text-bauhaus-red" aria-hidden="true">*</span>
+                    </label>
                     <input
                       required
+                      autoComplete="name"
                       type="text"
                       value={name}
                       onChange={(ev) => setName(ev.target.value)}
                       className="w-full border-b-2 border-black py-3 focus:border-bauhaus-red outline-none font-bold uppercase text-sm transition-all"
                       placeholder="YOUR NAME"
+                      aria-required="true"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-architect opacity-40">EMAIL</label>
+                    <label className="text-[10px] font-bold uppercase tracking-architect opacity-40">
+                      EMAIL <span className="text-bauhaus-red" aria-hidden="true">*</span>
+                    </label>
                     <input
                       required
+                      autoComplete="email"
                       type="email"
                       value={email}
                       onChange={(ev) => setEmail(ev.target.value)}
                       className="w-full border-b-2 border-black py-3 focus:border-bauhaus-blue outline-none font-bold uppercase text-sm transition-all"
                       placeholder="EMAIL@DOMAIN.COM"
+                      aria-required="true"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-architect opacity-40">
+                    MOBILE <span className="text-black/30 font-normal normal-case">(optional)</span>
+                  </label>
+                  <input
+                    type="tel"
+                    autoComplete="tel"
+                    inputMode="tel"
+                    value={mobile}
+                    onChange={(ev) => setMobile(ev.target.value)}
+                    className="w-full border-b-2 border-black py-3 focus:border-bauhaus-yellow outline-none font-bold uppercase text-sm transition-all"
+                    placeholder="+63 … OR LOCAL NUMBER"
+                    maxLength={40}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -135,7 +162,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-architect opacity-40">INQUIRY</label>
+                  <label className="text-[10px] font-bold uppercase tracking-architect opacity-40">
+                    INQUIRY <span className="text-bauhaus-red" aria-hidden="true">*</span>
+                  </label>
                   <textarea
                     required
                     rows={4}
