@@ -25,6 +25,14 @@ const ADMIN_USERNAME = envStr('ADMIN_USERNAME');
 const ADMIN_PASSWORD = envStr('ADMIN_PASSWORD');
 const JWT_SECRET = envStr('ADMIN_JWT_SECRET');
 
+function missingAdminEnvKeys(): string[] {
+  const keys: string[] = [];
+  if (!ADMIN_USERNAME) keys.push('ADMIN_USERNAME');
+  if (!ADMIN_PASSWORD) keys.push('ADMIN_PASSWORD');
+  if (!JWT_SECRET) keys.push('ADMIN_JWT_SECRET');
+  return keys;
+}
+
 const DATABASE_URL = envStr('DATABASE_URL');
 const API_PORT = Number(process.env.PORT ?? process.env.API_PORT) || 3001;
 
@@ -71,8 +79,9 @@ app.use(cors({ origin: true }));
 app.use(express.json({ limit: '64kb' }));
 
 function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
-  if (!JWT_SECRET) {
-    res.status(503).json({ error: 'Admin auth not configured' });
+  const missing = missingAdminEnvKeys();
+  if (missing.length > 0) {
+    res.status(503).json({ error: 'Admin auth not configured', missingEnv: missing });
     return;
   }
   const auth = req.headers.authorization;
@@ -140,8 +149,9 @@ app.post('/api/inquiries', async (req, res) => {
 });
 
 app.post('/api/admin/login', (req, res) => {
-  if (!JWT_SECRET || !ADMIN_USERNAME || !ADMIN_PASSWORD) {
-    res.status(503).json({ error: 'Admin not configured' });
+  const missing = missingAdminEnvKeys();
+  if (missing.length > 0) {
+    res.status(503).json({ error: 'Admin not configured', missingEnv: missing });
     return;
   }
   const { username, password } = req.body ?? {};
@@ -199,11 +209,12 @@ ensureSchema()
   .then(() => {
     app.listen(API_PORT, '0.0.0.0', () => {
       console.log(`Server listening on http://0.0.0.0:${API_PORT}`);
-      if (JWT_SECRET && ADMIN_USERNAME && ADMIN_PASSWORD) {
+      const missing = missingAdminEnvKeys();
+      if (missing.length === 0) {
         console.log('Admin login: enabled (POST /api/admin/login)');
       } else {
         console.warn(
-          'Admin login: not configured (optional). Set ADMIN_USERNAME, ADMIN_PASSWORD, and ADMIN_JWT_SECRET to enable POST /api/admin/login.'
+          `Admin login: disabled — add these env vars on your host (e.g. Railway service Variables): ${missing.join(', ')}`
         );
       }
     });

@@ -88,9 +88,9 @@ const Admin: React.FC = () => {
         body: JSON.stringify({ username: username.trim(), password }),
       });
       const raw = await res.text();
-      let data: { token?: string; error?: string };
+      let data: { token?: string; error?: string; missingEnv?: string[] };
       try {
-        data = raw ? (JSON.parse(raw) as { token?: string; error?: string }) : {};
+        data = raw ? (JSON.parse(raw) as { token?: string; error?: string; missingEnv?: string[] }) : {};
       } catch {
         setLoginError(
           res.status === 404 || res.status === 502
@@ -100,6 +100,12 @@ const Admin: React.FC = () => {
         return;
       }
       if (!res.ok) {
+        if (res.status === 503 && data.missingEnv?.length) {
+          setLoginError(
+            `Admin is not configured on the server. In your host’s environment (e.g. Railway → your web service → Variables), set: ${data.missingEnv.join(', ')}. Redeploy after saving.`
+          );
+          return;
+        }
         setLoginError(data.error ?? `Login failed (${res.status})`);
         return;
       }
