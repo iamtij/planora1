@@ -13,7 +13,8 @@ const Problem: React.FC = () => {
             <Reveal>
               <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black mb-8 md:mb-12 leading-[0.9] sm:leading-[0.85] tracking-bauhaus uppercase break-words">
                 STOP BUILDING <br />
-                BY <span className="text-bauhaus-red block sm:inline">GUESSWORK.</span>
+                BY{' '}
+                <span className="text-bauhaus-red block sm:inline whitespace-nowrap">GUESSWORK.</span>
               </h2>
               <div className="space-y-8 text-base sm:text-lg md:text-xl font-light text-gray-600 leading-relaxed max-w-xl">
                 <p>

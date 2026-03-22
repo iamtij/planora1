@@ -61,6 +61,12 @@ const Solution: React.FC = () => {
               {/* Gentle Light Sweep Animation (Less 'Laser', More 'Searchlight') */}
               <div className="absolute top-0 left-0 w-full h-1/4 bg-gradient-to-b from-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 animate-light-sweep z-20 pointer-events-none"></div>
 
+              <p
+                className={`relative z-10 text-xs font-mono font-bold tracking-[0.2em] mb-8 transition-colors ${step.accent} group-hover:text-white`}
+              >
+                Step {i + 1}
+              </p>
+
               {/* Symbol */}
               <div className={`text-4xl mb-12 transition-transform duration-700 group-hover:scale-125 ${step.accent}`}>
                 {step.symbol}
