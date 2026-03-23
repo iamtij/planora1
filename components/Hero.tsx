@@ -18,7 +18,7 @@ const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
   };
 
   return (
-    <header id="top" className="relative min-h-screen flex flex-col justify-center pt-20 overflow-hidden bg-white">
+    <header id="top" className="relative min-h-screen flex flex-col justify-center pt-36 md:pt-32 lg:pt-20 overflow-x-hidden overflow-y-visible bg-white">
       {/* Precision Grid Background */}
       <div className="absolute inset-0 z-0 opacity-100 architectural-grid pointer-events-none"></div>
       
@@ -54,10 +54,13 @@ const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
             </Reveal>
           </div>
 
-          <div className="hidden lg:block flex-1 relative overflow-hidden">
-            <Reveal variant="image" priority delay={420}>
-              <FloorPlan3D />
-            </Reveal>
+          {/* Scale keeps the isometric floor inside the frame (3D rotation paints wider than 450px layout) */}
+          <div className="w-full flex-1 relative min-w-0 flex justify-center lg:justify-end px-1 sm:px-2">
+            <div className="origin-center scale-[0.68] sm:scale-[0.76] md:scale-[0.82] lg:scale-[0.88] xl:scale-92 2xl:scale-95">
+              <Reveal variant="image" priority delay={420}>
+                <FloorPlan3D />
+              </Reveal>
+            </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Reveal from './Reveal';
 import BookStudioCta from './BookStudioCta';
+import FloorPlan3D from './FloorPlan3D';
 
 interface ProblemProps {
   onOpenBooking: () => void;
@@ -8,7 +9,6 @@ interface ProblemProps {
 
 const Problem: React.FC<ProblemProps> = ({ onOpenBooking }) => {
   const [view, setView] = useState<'2D' | '3D'>('2D');
-  const [imgError, setImgError] = useState(false);
 
   return (
     <section id="problem" className="py-24 md:py-48 bg-bauhaus-beige border-y border-black/5 scroll-mt-24 overflow-hidden">
@@ -77,29 +77,15 @@ const Problem: React.FC<ProblemProps> = ({ onOpenBooking }) => {
                   </svg>
                 </div>
 
-                {/* 3D View (High-Quality Kitchen Render) */}
+                {/* 3D View — same FloorPlan3D as hero header */}
                 <div className={`absolute inset-0 transition-all duration-700 ease-in-out ${view === '3D' ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-95 -rotate-3 pointer-events-none'}`}>
-                  {!imgError ? (
-                    <img 
-                      src="https://images.unsplash.com/photo-1600607687940-4e2a09695d51?auto=format&fit=crop&q=80&w=1400" 
-                      alt="Realistic Architectural Kitchen Model" 
-                      className="w-full h-full object-cover"
-                      onError={() => setImgError(true)}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-bauhaus-beige flex items-center justify-center">
-                       <div className="text-center font-mono space-y-4">
-                          <div className="text-[10px] text-gray-400 uppercase tracking-[0.5em] animate-pulse">RECONSTRUCTING_VOLUMES</div>
-                          <div className="w-32 h-32 border border-black/10 mx-auto relative flex items-center justify-center">
-                             <div className="absolute inset-0 architectural-grid opacity-10"></div>
-                             <div className="w-12 h-12 bg-bauhaus-blue/20"></div>
-                          </div>
-                       </div>
+                  {view === '3D' ? (
+                    <div className="absolute inset-0 flex min-h-0 items-center justify-center overflow-auto bg-white [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                      <Reveal variant="image">
+                        <FloorPlan3D />
+                      </Reveal>
                     </div>
-                  )}
-                  {/* Digital Overlay Effect */}
-                  <div className="absolute inset-0 bg-bauhaus-blue/5 mix-blend-multiply"></div>
-                  <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.02),rgba(0,255,0,0.01),rgba(0,0,255,0.02))] bg-[length:100%_2px,3px_100%] opacity-20"></div>
+                  ) : null}
                 </div>
 
                 {/* Meta Information Overlays */}
@@ -109,7 +95,9 @@ const Problem: React.FC<ProblemProps> = ({ onOpenBooking }) => {
 
                 <div className="absolute bottom-6 left-6 flex flex-col gap-1 z-10">
                   <span className="text-[8px] font-mono text-gray-400 uppercase tracking-widest">LAYER_VISIBILITY: 100%</span>
-                  <span className="text-[8px] font-mono text-gray-400 uppercase tracking-widest">OBJECT_NAME: KITCHEN_UNIT_01</span>
+                  <span className="text-[8px] font-mono text-gray-400 uppercase tracking-widest">
+                    {view === '2D' ? 'OBJECT_NAME: KITCHEN_UNIT_01' : 'OBJECT_NAME: PLAN_WALKTHROUGH_01'}
+                  </span>
                 </div>
 
                 {/* Red Uncertainty Stamp - Only for 2D */}
