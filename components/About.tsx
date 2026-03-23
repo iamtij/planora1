@@ -38,7 +38,7 @@ const About: React.FC<AboutProps> = ({ onOpenBooking }) => {
             <Reveal delay={200}>
               <h2 className="text-4xl md:text-6xl font-black uppercase tracking-bauhaus leading-[0.9] text-black">
                 WE ARE <br />
-                <span className="text-bauhaus-blue italic">PLANORAMA.</span>
+                <span className="text-bauhaus-blue italic">PLANORAMA STUDIO.</span>
               </h2>
             </Reveal>
 
