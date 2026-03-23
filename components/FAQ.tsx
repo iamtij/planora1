@@ -27,6 +27,11 @@ const FAQ: React.FC<FAQProps> = ({ onOpenBooking }) => {
       color: "text-bauhaus-yellow"
     },
     {
+      q: "WHERE IS THE STUDIO?",
+      a: "We're in Quezon City at 10B Don Alfredo Egea St. Sessions are by appointment—book a visit and we'll share directions, parking, and what to bring for your project files.",
+      color: "text-bauhaus-red"
+    },
+    {
       q: "WHAT DATA DO YOU NEED FROM US?",
       a: "We work with standard architectural files—PDFs, CAD drawings, or Revit models. Once received, our technicians calibrate your plans for the floor, ensuring that every millimeter in your drawing matches every millimeter on our studio floor.",
       color: "text-black"
