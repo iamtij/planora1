@@ -96,8 +96,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose }) => {
           {step === 'form' ? (
             <div className="pt-4">
               <h3 className="text-3xl font-black uppercase tracking-bauhaus mb-2">BOOK STUDIO</h3>
-              <p className="text-gray-500 text-sm mb-10 font-medium tracking-wide uppercase">EXPERIENCE YOUR PROJECT AT LIFE SIZE.</p>
-              
+              <p className="text-gray-500 text-sm mb-6 font-medium tracking-wide uppercase">EXPERIENCE YOUR PROJECT AT LIFE SIZE.</p>
+              <p className="text-[10px] font-bold uppercase tracking-architect opacity-40 mb-2">STUDIO LOCATION</p>
+              <p className="text-sm font-bold uppercase tracking-bauhaus text-black leading-snug mb-10 border-l-2 border-black pl-4">
+                10B DON ALFREDO EGEA ST.
+                <br />
+                QUEZON CITY
+              </p>
+
               <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
                   <div className="space-y-2">
