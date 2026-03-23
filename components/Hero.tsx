@@ -13,7 +13,7 @@ const Hero: React.FC<HeroProps> = ({ onOpenBooking }) => {
     e.preventDefault();
     const element = document.getElementById('solution');
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 

@@ -38,7 +38,7 @@ const Solution: React.FC<SolutionProps> = ({ onOpenBooking }) => {
   ];
 
   return (
-    <section id="solution" className="py-32 md:py-56 bg-white text-black scroll-mt-24 relative overflow-hidden">
+    <section className="py-32 md:py-56 bg-white text-black relative overflow-hidden">
       {/* Subtle architectural depth */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.02] architectural-grid"></div>
       <Reveal variant="fade" className="absolute top-0 left-0 w-full pointer-events-none z-10">
@@ -48,7 +48,8 @@ const Solution: React.FC<SolutionProps> = ({ onOpenBooking }) => {
         <div className="h-px w-full bg-black/5" />
       </Reveal>
 
-      <div className="max-w-7xl mx-auto px-6 mb-24 md:mb-32">
+      {/* Anchor here (not on <section>) so in-page links land on the headline, not the section’s top padding */}
+      <div id="solution" className="max-w-7xl mx-auto px-6 mb-24 md:mb-32 scroll-mt-32 md:scroll-mt-36">
         <Reveal>
           <h2 className="font-sans text-5xl md:text-7xl font-black uppercase tracking-bauhaus leading-[0.85]">
             3 STEPS TO <br />
