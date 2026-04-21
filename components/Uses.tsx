@@ -158,7 +158,7 @@ const Uses: React.FC<UsesProps> = ({ onOpenBooking }) => {
           </Reveal>
           <Reveal delay={100} className="flex-1 pt-4">
             <p className="text-xl font-light text-gray-500 leading-relaxed border-l border-black pl-8">
-              Our 12m x 12m projection floor serves as a physical bridge between your computer screen and your future home. Experience the true volume of your project.
+              Our 12m x 14m projection floor serves as a physical bridge between your computer screen and your future home. Experience the true volume of your project.
             </p>
           </Reveal>
         </div>

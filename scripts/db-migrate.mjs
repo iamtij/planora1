@@ -90,6 +90,34 @@ const initSql = fs.readFileSync(path.join(__dirname, '../db/init.sql'), 'utf8');
 try {
   await pool.query(initSql);
   await pool.query('ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS mobile TEXT;');
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS studio_settings (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      day_start TIME NOT NULL DEFAULT '09:00',
+      day_end TIME NOT NULL DEFAULT '18:00',
+      slot_interval_minutes INTEGER NOT NULL DEFAULT 30
+    );
+  `);
+  await pool.query(`
+    INSERT INTO studio_settings (id, day_start, day_end, slot_interval_minutes)
+    SELECT 1, '09:00'::time, '18:00'::time, 30
+    WHERE NOT EXISTS (SELECT 1 FROM studio_settings WHERE id = 1);
+  `);
+  await pool.query('ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS visit_date DATE;');
+  await pool.query('ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS visit_time TIME;');
+  await pool.query('ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS bundle_preference TEXT;');
+  await pool.query('ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS prc_number TEXT;');
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS studio_bookable_slots (
+      id SERIAL PRIMARY KEY,
+      slot_date DATE NOT NULL,
+      slot_time TIME NOT NULL,
+      UNIQUE (slot_date, slot_time)
+    );
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_studio_bookable_slots_date ON studio_bookable_slots (slot_date);
+  `);
   console.log(`Migration OK (${isRailway ? 'Railway' : 'local'}).`);
 } catch (err) {
   const msg = err instanceof Error ? err.message : String(err);

@@ -66,7 +66,7 @@ const About: React.FC<AboutProps> = ({ onOpenBooking }) => {
             <Reveal delay={400}>
               <div className="flex flex-wrap gap-12 pt-8">
                 <div>
-                  <div className="text-3xl font-black text-black mb-1">12m x 12m</div>
+                  <div className="text-3xl font-black text-black mb-1">12m x 14m</div>
                   <div className="text-[10px] font-bold uppercase tracking-architect text-gray-400">PROJECTION FLOOR</div>
                 </div>
                 <div>

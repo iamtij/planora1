@@ -27,7 +27,7 @@ const Footer: React.FC<FooterProps> = ({ onOpenBooking }) => {
             <div className="flex flex-col justify-end">
               <div className="border-l-2 border-black pl-8">
                 <p className="text-xl font-bold uppercase tracking-bauhaus text-black">
-                  10B DON ALFREDO EGEA ST. <br />
+                  10 DON ALFREDO EGEA, <br />
                   QUEZON CITY
                 </p>
               </div>

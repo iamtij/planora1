@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type ReactNode } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import Reveal from './Reveal';
 import BookStudioCta from './BookStudioCta';
@@ -10,7 +10,10 @@ interface FAQProps {
 const FAQ: React.FC<FAQProps> = ({ onOpenBooking }) => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  const questions = [
+  const linkClass =
+    'text-bauhaus-red underline underline-offset-2 decoration-black/20 hover:text-black hover:decoration-black transition-colors';
+
+  const questions: { q: string; a: ReactNode; color: string }[] = [
     {
       q: "WE HAVE 3D RENDERS. IS THIS DIFFERENT?",
       a: "Crucially. Renders show you what a room looks like; they don't show you how it functions. 1:1 projection reveals spatial flow, ergonomics, and physical clearances that a computer screen simply cannot communicate. It's the difference between looking at a photo of a car and sitting in the driver's seat.",
@@ -28,12 +31,29 @@ const FAQ: React.FC<FAQProps> = ({ onOpenBooking }) => {
     },
     {
       q: "WHERE IS THE STUDIO?",
-      a: "We're in Quezon City at 10B Don Alfredo Egea St. Sessions are by appointment—book a visit and we'll share directions, parking, and what to bring for your project files.",
+      a: (
+        <>
+          10 Don Alfredo Egea, Quezon City. Sessions are by appointment—open{' '}
+          <a
+            href="https://maps.app.goo.gl/5VwJE4BFfZomPRUT8?g_st=ic"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={linkClass}
+          >
+            Google Maps
+          </a>{' '}
+          or{' '}
+          <a href="https://waze.com/ul/hwdw54qmnk" target="_blank" rel="noopener noreferrer" className={linkClass}>
+            Waze
+          </a>{' '}
+          for directions, parking, and what to bring for your project files.
+        </>
+      ),
       color: "text-bauhaus-red"
     },
     {
       q: "WHAT DATA DO YOU NEED FROM US?",
-      a: "We work with standard architectural files—PDFs, CAD drawings, or Revit models. Once received, our technicians calibrate your plans for the floor, ensuring that every millimeter in your drawing matches every millimeter on our studio floor.",
+      a: "We work with standard architectural files—PDFs and CAD drawings, preferably in DWG or DWF format. Once received, our technicians calibrate your plans for the floor, ensuring that every millimeter in your drawing matches every millimeter on our studio floor.",
       color: "text-black"
     }
   ];
