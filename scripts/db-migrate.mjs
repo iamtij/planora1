@@ -107,6 +107,8 @@ try {
   await pool.query('ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS visit_time TIME;');
   await pool.query('ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS bundle_preference TEXT;');
   await pool.query('ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS prc_number TEXT;');
+  await pool.query(`ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending';`);
+  await pool.query(`ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS studio_bookable_slots (
       id SERIAL PRIMARY KEY,

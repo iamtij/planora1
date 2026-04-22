@@ -17,6 +17,8 @@ import { formatTime12Hour } from '@/server/studioSettings';
 
 const TOKEN_KEY = 'planorama_admin_token';
 
+export type InquiryStatus = 'pending' | 'approved' | 'cancelled';
+
 export type InquiryRow = {
   id: number;
   name: string;
@@ -28,6 +30,8 @@ export type InquiryRow = {
   visit_time: string | null;
   bundle_preference: string | null;
   prc_number: string | null;
+  status: InquiryStatus;
+  reviewed_at: string | null;
   created_at: string;
 };
 
@@ -45,6 +49,18 @@ function formatBundleLabel(id: string | null): string {
 function displayVisitTime(t: string | null | undefined): string {
   if (t == null || t === '') return '—';
   return formatTime12Hour(t);
+}
+
+function inquiryStatusLabel(s: InquiryStatus): string {
+  if (s === 'approved') return 'Approved';
+  if (s === 'cancelled') return 'Cancelled';
+  return 'Pending';
+}
+
+function inquiryStatusClass(s: InquiryStatus): string {
+  if (s === 'approved') return 'bg-emerald-100 text-emerald-900 border border-emerald-300';
+  if (s === 'cancelled') return 'bg-red-50 text-red-900 border border-red-200';
+  return 'bg-amber-100 text-amber-900 border border-amber-300';
 }
 
 type BookableSlotRow = { id: number; slot_date: string; slot_time: string };
@@ -165,6 +181,7 @@ const Admin: React.FC = () => {
   const [rows, setRows] = useState<InquiryRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [inquiryPatchingId, setInquiryPatchingId] = useState<number | null>(null);
 
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
@@ -214,7 +231,13 @@ const Admin: React.FC = () => {
         return;
       }
       const data = (await res.json()) as InquiryRow[];
-      setRows(data);
+      setRows(
+        data.map((r) => ({
+          ...r,
+          status: (r.status ?? 'pending') as InquiryStatus,
+          reviewed_at: r.reviewed_at ?? null,
+        }))
+      );
     } catch {
       setLoadError('Could not reach the server.');
     } finally {
@@ -229,6 +252,38 @@ const Admin: React.FC = () => {
       setRows([]);
     }
   }, [token, fetchInquiries]);
+
+  const patchInquiryStatus = useCallback(
+    async (id: number, next: 'approved' | 'cancelled') => {
+      if (!token) return;
+      setInquiryPatchingId(id);
+      setLoadError(null);
+      try {
+        const res = await fetch(`/api/admin/inquiries/${id}`, {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: next }),
+        });
+        if (res.status === 401) {
+          sessionStorage.removeItem(TOKEN_KEY);
+          setToken(null);
+          setLoadError('Session expired. Sign in again.');
+          return;
+        }
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        if (!res.ok) {
+          setLoadError(data.error ?? 'Could not update inquiry');
+          return;
+        }
+        await fetchInquiries(token);
+      } catch {
+        setLoadError('Could not reach the server.');
+      } finally {
+        setInquiryPatchingId(null);
+      }
+    },
+    [token, fetchInquiries]
+  );
 
   const fetchStudioSettings = useCallback(async (t: string) => {
     setStudioLoading(true);
@@ -567,7 +622,12 @@ const Admin: React.FC = () => {
       sessionStorage.setItem(TOKEN_KEY, data.token);
       setToken(data.token);
       setPassword('');
-      navigate('/admin/calendar', { replace: true });
+      const hl = searchParams.get('highlight');
+      if (hl) {
+        navigate(`/admin/inquiries?highlight=${encodeURIComponent(hl)}`, { replace: true });
+      } else {
+        navigate('/admin/calendar', { replace: true });
+      }
     } catch {
       setLoginError('Could not reach the server.');
     } finally {
@@ -592,7 +652,13 @@ const Admin: React.FC = () => {
     } else {
       setSortKey(key);
       setSortDir(
-        key === 'created_at' || key === 'id' || key === 'visit_date' || key === 'visit_time' ? 'desc' : 'asc'
+        key === 'created_at' ||
+        key === 'reviewed_at' ||
+        key === 'id' ||
+        key === 'visit_date' ||
+        key === 'visit_time'
+          ? 'desc'
+          : 'asc'
       );
     }
   };
@@ -614,6 +680,9 @@ const Admin: React.FC = () => {
           r.bundle_preference ?? '',
           formatBundleLabel(r.bundle_preference),
           r.prc_number ?? '',
+          r.status ?? '',
+          inquiryStatusLabel((r.status ?? 'pending') as InquiryStatus),
+          r.reviewed_at ? formatDate(r.reviewed_at) : '',
           formatDate(r.created_at),
         ]
           .join(' ')
@@ -631,6 +700,9 @@ const Admin: React.FC = () => {
       } else if (sortKey === 'created_at') {
         va = new Date(a.created_at).getTime();
         vb = new Date(b.created_at).getTime();
+      } else if (sortKey === 'reviewed_at') {
+        va = a.reviewed_at ? new Date(a.reviewed_at).getTime() : 0;
+        vb = b.reviewed_at ? new Date(b.reviewed_at).getTime() : 0;
       } else {
         va = String(va ?? '').toLowerCase();
         vb = String(vb ?? '').toLowerCase();
@@ -656,6 +728,25 @@ const Admin: React.FC = () => {
   useEffect(() => {
     setPage((p) => Math.min(p, totalPages));
   }, [totalPages]);
+
+  useEffect(() => {
+    if (!token || !location.pathname.includes('/inquiries')) return;
+    const raw = searchParams.get('highlight');
+    if (!raw || !/^\d+$/.test(raw)) return;
+    const idNum = Number(raw);
+    if (!rows.some((r) => r.id === idNum)) return;
+    const tid = window.setTimeout(() => {
+      const el = document.getElementById(`inquiry-${idNum}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-2', 'ring-bauhaus-yellow', 'ring-offset-2');
+        window.setTimeout(() => {
+          el.classList.remove('ring-2', 'ring-bauhaus-yellow', 'ring-offset-2');
+        }, 4000);
+      }
+    }, 150);
+    return () => window.clearTimeout(tid);
+  }, [token, location.pathname, searchParams, rows]);
 
   const SortIcon: React.FC<{ column: SortKey }> = ({ column }) => {
     if (sortKey !== column) {
@@ -690,6 +781,8 @@ const Admin: React.FC = () => {
     { key: 'bundle_preference', label: 'Bundle' },
     { key: 'prc_number', label: 'PRC #' },
     { key: 'inquiry', label: 'Inquiry' },
+    { key: 'status', label: 'Status' },
+    { key: 'reviewed_at', label: 'Reviewed' },
     { key: 'created_at', label: 'Created' },
   ];
 
@@ -700,8 +793,10 @@ const Admin: React.FC = () => {
           <p className="text-[10px] font-bold uppercase tracking-architect opacity-50">Planorama</p>
           <h1 className="text-xl font-black uppercase tracking-bauhaus">{adminPageTitle}</h1>
           {token && location.pathname.includes('/inquiries') ? (
-            <p className="mt-1 max-w-md text-xs text-black/55 leading-snug">
-              Search and sort incoming Book Studio requests.
+            <p className="mt-1 max-w-xl text-xs text-black/55 leading-snug">
+              Search and sort incoming Book Studio requests. Approve or cancel pending rows; the guest is emailed when you
+              approve (confirmation) or cancel (update). Set <code className="font-mono text-[10px]">RESEND_API_KEY</code> and{' '}
+              <code className="font-mono text-[10px]">ADMIN_NOTIFY_EMAIL</code> on the server for notifications.
             </p>
           ) : null}
           {token && location.pathname.includes('/bookable') ? (
@@ -1223,7 +1318,8 @@ const Admin: React.FC = () => {
               pageRows.map((r) => (
                 <article
                   key={r.id}
-                  className="border border-black/15 bg-white p-4 shadow-sm hairline-border"
+                  id={`inquiry-${r.id}`}
+                  className="border border-black/15 bg-white p-4 shadow-sm hairline-border scroll-mt-24 rounded-sm transition-shadow"
                 >
                   <dl className="space-y-3 text-sm">
                     <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-black/10 pb-2">
@@ -1271,17 +1367,51 @@ const Admin: React.FC = () => {
                       <dd className="mt-1 whitespace-pre-wrap break-words text-xs leading-relaxed">{r.inquiry}</dd>
                     </div>
                     <div>
+                      <dt className="text-[10px] font-bold uppercase tracking-architect text-black/45">Status</dt>
+                      <dd className="mt-1">
+                        <span
+                          className={`inline-block rounded-sm px-2 py-0.5 text-[10px] font-bold uppercase tracking-architect ${inquiryStatusClass(r.status)}`}
+                        >
+                          {inquiryStatusLabel(r.status)}
+                        </span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] font-bold uppercase tracking-architect text-black/45">Reviewed</dt>
+                      <dd className="mt-1 font-mono text-xs">{r.reviewed_at ? formatDate(r.reviewed_at) : '—'}</dd>
+                    </div>
+                    <div>
                       <dt className="text-[10px] font-bold uppercase tracking-architect text-black/45">Created</dt>
                       <dd className="mt-1 font-mono text-xs">{formatDate(r.created_at)}</dd>
                     </div>
                   </dl>
+                  {r.status === 'pending' ? (
+                    <div className="mt-4 flex flex-wrap gap-2 border-t border-black/10 pt-4">
+                      <button
+                        type="button"
+                        disabled={inquiryPatchingId === r.id}
+                        onClick={() => void patchInquiryStatus(r.id, 'approved')}
+                        className="border-2 border-black bg-black px-4 py-2 text-[10px] font-bold uppercase tracking-architect text-white hover:bg-bauhaus-red disabled:opacity-50"
+                      >
+                        {inquiryPatchingId === r.id ? 'Updating…' : 'Approve'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={inquiryPatchingId === r.id}
+                        onClick={() => void patchInquiryStatus(r.id, 'cancelled')}
+                        className="border-2 border-black bg-white px-4 py-2 text-[10px] font-bold uppercase tracking-architect hover:bg-black/5 disabled:opacity-50"
+                      >
+                        Cancel booking
+                      </button>
+                    </div>
+                  ) : null}
                 </article>
               ))
             )}
           </div>
 
           <div className="hidden overflow-x-auto border border-black/15 bg-white hairline-border md:block">
-            <table className="w-full text-left text-sm min-w-[1100px]">
+            <table className="w-full text-left text-sm min-w-[1280px]">
               <thead>
                 <tr className="border-b border-black bg-black text-white">
                   {(
@@ -1296,6 +1426,8 @@ const Admin: React.FC = () => {
                       ['bundle_preference', 'Bundle'],
                       ['prc_number', 'PRC'],
                       ['inquiry', 'Inquiry'],
+                      ['status', 'Status'],
+                      ['reviewed_at', 'Reviewed'],
                       ['created_at', 'Created'],
                     ] as const
                   ).map(([key, label]) => (
@@ -1310,18 +1442,23 @@ const Admin: React.FC = () => {
                       </button>
                     </th>
                   ))}
+                  <th className="p-3 font-bold uppercase text-[10px] tracking-architect text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {totalFiltered === 0 ? (
                   <tr>
-                    <td colSpan={11} className="p-8 text-center text-black/50 font-mono text-xs">
+                    <td colSpan={14} className="p-8 text-center text-black/50 font-mono text-xs">
                       {rows.length === 0 ? 'No inquiries yet.' : 'No rows match your search.'}
                     </td>
                   </tr>
                 ) : (
                   pageRows.map((r) => (
-                    <tr key={r.id} className="border-b border-black/10 hover:bg-bauhaus-beige/80">
+                    <tr
+                      key={r.id}
+                      id={`inquiry-${r.id}`}
+                      className="border-b border-black/10 hover:bg-bauhaus-beige/80 scroll-mt-24"
+                    >
                       <td className="p-3 font-mono text-xs align-top">{r.id}</td>
                       <td className="p-3 font-bold uppercase text-xs align-top max-w-[140px] break-words">{r.name}</td>
                       <td className="p-3 font-mono text-xs align-top max-w-[200px] break-all">
@@ -1338,7 +1475,41 @@ const Admin: React.FC = () => {
                       <td className="p-3 text-xs align-top max-w-md whitespace-pre-wrap break-words" title={r.inquiry}>
                         {r.inquiry}
                       </td>
+                      <td className="p-3 align-top whitespace-nowrap">
+                        <span
+                          className={`inline-block rounded-sm px-2 py-0.5 text-[10px] font-bold uppercase tracking-architect ${inquiryStatusClass(r.status)}`}
+                        >
+                          {inquiryStatusLabel(r.status)}
+                        </span>
+                      </td>
+                      <td className="p-3 font-mono text-xs align-top whitespace-nowrap">
+                        {r.reviewed_at ? formatDate(r.reviewed_at) : '—'}
+                      </td>
                       <td className="p-3 font-mono text-xs align-top whitespace-nowrap">{formatDate(r.created_at)}</td>
+                      <td className="p-3 align-top text-right whitespace-nowrap">
+                        {r.status === 'pending' ? (
+                          <div className="flex flex-col items-end gap-1.5">
+                            <button
+                              type="button"
+                              disabled={inquiryPatchingId === r.id}
+                              onClick={() => void patchInquiryStatus(r.id, 'approved')}
+                              className="border-2 border-black bg-black px-2 py-1 text-[9px] font-bold uppercase tracking-architect text-white hover:bg-bauhaus-red disabled:opacity-50"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              disabled={inquiryPatchingId === r.id}
+                              onClick={() => void patchInquiryStatus(r.id, 'cancelled')}
+                              className="border-2 border-black bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-architect hover:bg-black/5 disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-black/40">—</span>
+                        )}
+                      </td>
                     </tr>
                   ))
                 )}

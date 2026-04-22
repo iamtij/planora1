@@ -15,7 +15,8 @@
     "db:check": "node scripts/db-check.mjs",
     "db:migrate": "node scripts/db-migrate.mjs local",
     "db:migrate:local": "node scripts/db-migrate.mjs local",
-    "db:migrate:railway": "node scripts/db-migrate.mjs railway"
+    "db:migrate:railway": "node scripts/db-migrate.mjs railway",
+    "mail:test": "node scripts/mail-test.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",

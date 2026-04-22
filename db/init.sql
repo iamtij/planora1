@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS inquiries (
   visit_time TIME,
   bundle_preference TEXT,
   prc_number TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  reviewed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

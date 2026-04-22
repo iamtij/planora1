@@ -13,6 +13,12 @@ import {
   manilaTodayYmd,
   normalizeTimeToHHMM,
 } from './studioSettings.ts';
+import {
+  notifyAdminNewInquiry,
+  notifyUserInquiryReceived,
+  notifyUserBookingApproved,
+  notifyUserBookingCancelled,
+} from './mail.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.join(__dirname, '..');
@@ -90,6 +96,12 @@ async function ensureSchema() {
   `);
   await pool.query(`
     ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS prc_number TEXT;
+  `);
+  await pool.query(`
+    ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending';
+  `);
+  await pool.query(`
+    ALTER TABLE inquiries ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
   `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS studio_settings (
@@ -527,11 +539,15 @@ app.post('/api/inquiries', async (req, res) => {
       visit_time: string | null;
       bundle_preference: string | null;
       prc_number: string | null;
+      status: string;
+      reviewed_at: string | null;
       created_at: string;
     }>(
       `INSERT INTO inquiries (name, email, mobile, type, inquiry, visit_date, visit_time, bundle_preference, prc_number)
        VALUES ($1, $2, $3, $4, $5, $6::date, $7::time, $8, $9)
-       RETURNING id, name, email, mobile, type, inquiry, visit_date, visit_time, bundle_preference, prc_number, created_at`,
+       RETURNING id, name, email, mobile, type, inquiry, visit_date::text AS visit_date,
+         to_char(visit_time, 'HH24:MI') AS visit_time, bundle_preference, prc_number,
+         status, reviewed_at, created_at`,
       [
         trimmed.name,
         trimmed.email,
@@ -544,7 +560,10 @@ app.post('/api/inquiries', async (req, res) => {
         trimmed.prcNumber,
       ]
     );
-    res.status(201).json(result.rows[0]);
+    const row = result.rows[0];
+    void notifyAdminNewInquiry(row).catch((e) => console.error('[mail] notify admin new inquiry:', e));
+    void notifyUserInquiryReceived(row).catch((e) => console.error('[mail] user inquiry receipt:', e));
+    res.status(201).json(row);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not save inquiry' });
@@ -585,12 +604,14 @@ app.get('/api/admin/inquiries', requireAdmin, async (_req, res) => {
       visit_time: string | null;
       bundle_preference: string | null;
       prc_number: string | null;
+      status: string;
+      reviewed_at: Date | null;
       created_at: Date;
     }>(
       `SELECT id, name, email, mobile, type, inquiry,
               visit_date::text AS visit_date,
               to_char(visit_time, 'HH24:MI') AS visit_time,
-              bundle_preference, prc_number, created_at
+              bundle_preference, prc_number, status, reviewed_at, created_at
        FROM inquiries
        ORDER BY created_at DESC`
     );
@@ -598,6 +619,66 @@ app.get('/api/admin/inquiries', requireAdmin, async (_req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Could not load inquiries' });
+  }
+});
+
+type InquiryRowDb = {
+  id: number;
+  name: string;
+  email: string;
+  mobile: string | null;
+  type: string;
+  inquiry: string;
+  visit_date: string | null;
+  visit_time: string | null;
+  bundle_preference: string | null;
+  prc_number: string | null;
+  status: string;
+  reviewed_at: Date | null;
+  created_at: Date;
+};
+
+app.patch('/api/admin/inquiries/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const { status } = req.body ?? {};
+  if (!Number.isInteger(id) || id < 1) {
+    res.status(400).json({ error: 'Invalid id' });
+    return;
+  }
+  if (status !== 'approved' && status !== 'cancelled') {
+    res.status(400).json({ error: 'status must be approved or cancelled' });
+    return;
+  }
+  try {
+    const result = await pool.query<InquiryRowDb>(
+      `UPDATE inquiries
+       SET status = $2::text, reviewed_at = NOW()
+       WHERE id = $1 AND status = 'pending'
+       RETURNING id, name, email, mobile, type, inquiry,
+         visit_date::text AS visit_date,
+         to_char(visit_time, 'HH24:MI') AS visit_time,
+         bundle_preference, prc_number, status, reviewed_at, created_at`,
+      [id, status]
+    );
+    if (result.rowCount === 0) {
+      const ex = await pool.query<{ status: string }>(`SELECT status FROM inquiries WHERE id = $1`, [id]);
+      if (ex.rowCount === 0) {
+        res.status(404).json({ error: 'Not found' });
+        return;
+      }
+      res.status(409).json({ error: 'Inquiry is no longer pending' });
+      return;
+    }
+    const row = result.rows[0];
+    if (status === 'approved') {
+      void notifyUserBookingApproved(row).catch((e) => console.error('[mail] user approved:', e));
+    } else {
+      void notifyUserBookingCancelled(row).catch((e) => console.error('[mail] user cancelled:', e));
+    }
+    res.json(row);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Could not update inquiry' });
   }
 });
 
