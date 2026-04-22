@@ -10,6 +10,11 @@ export function publicAppUrl(): string {
   return u.replace(/\/$/, '');
 }
 
+/** Reply-To on all transactional mail (Resend `reply_to`). Override with EMAIL_REPLY_TO. */
+function replyToAddress(): string {
+  return envStr('EMAIL_REPLY_TO') ?? 'planoramastudiosph@gmail.com';
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -61,6 +66,7 @@ export async function sendTransactionalEmail(opts: {
       },
       body: JSON.stringify({
         from,
+        reply_to: replyToAddress(),
         to: [opts.to],
         subject: opts.subject,
         html: opts.html,

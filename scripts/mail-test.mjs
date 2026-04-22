@@ -17,6 +17,8 @@ dotenv.config({ path: path.join(root, '.env') });
 
 const key = process.env.RESEND_API_KEY?.trim();
 const from = process.env.EMAIL_FROM?.trim() || 'Planorama <onboarding@resend.dev>';
+const replyTo =
+  process.env.EMAIL_REPLY_TO?.trim() || 'planoramastudiosph@gmail.com';
 
 const argv = process.argv.slice(2).filter((a) => a !== '--');
 
@@ -67,6 +69,7 @@ async function sendOne(to) {
     },
     body: JSON.stringify({
       from,
+      reply_to: replyTo,
       to: [to],
       subject: `[Planorama mail:test] ${new Date().toISOString()}`,
       html: `<p>This is a manual test from <code>npm run mail:test</code>.</p><p><strong>To:</strong> ${escapeHtml(to)}</p><p>If you received this, Resend delivery works.</p>`,
