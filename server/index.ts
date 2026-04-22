@@ -112,9 +112,51 @@ async function ensureSchema() {
     );
   `);
   await pool.query(`
-    INSERT INTO studio_settings (id, day_start, day_end, slot_interval_minutes)
-    SELECT 1, '09:00'::time, '18:00'::time, 30
-    WHERE NOT EXISTS (SELECT 1 FROM studio_settings WHERE id = 1);
+    ALTER TABLE studio_settings DROP CONSTRAINT IF EXISTS studio_settings_id_check;
+  `);
+  await pool.query(`CREATE SEQUENCE IF NOT EXISTS studio_settings_id_seq;`);
+  await pool.query(`
+    ALTER TABLE studio_settings
+    ALTER COLUMN id SET DEFAULT nextval('studio_settings_id_seq');
+  `);
+  await pool.query(`
+    ALTER TABLE studio_settings ADD COLUMN IF NOT EXISTS name TEXT;
+  `);
+  await pool.query(`
+    UPDATE studio_settings
+    SET name = COALESCE(NULLIF(TRIM(name), ''), 'Default Template')
+    WHERE name IS NULL OR TRIM(name) = '';
+  `);
+  await pool.query(`
+    ALTER TABLE studio_settings ALTER COLUMN name SET NOT NULL;
+  `);
+  await pool.query(`
+    ALTER TABLE studio_settings ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+  `);
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'studio_settings_name_unique'
+      ) THEN
+        ALTER TABLE studio_settings
+          ADD CONSTRAINT studio_settings_name_unique UNIQUE (name);
+      END IF;
+    END $$;
+  `);
+  await pool.query(`
+    INSERT INTO studio_settings (id, name, day_start, day_end, slot_interval_minutes)
+    SELECT 1, 'Default Template', '09:00'::time, '18:00'::time, 30
+    WHERE NOT EXISTS (SELECT 1 FROM studio_settings);
+  `);
+  await pool.query(`
+    SELECT setval(
+      'studio_settings_id_seq',
+      GREATEST((SELECT COALESCE(MAX(id), 1) FROM studio_settings), 1),
+      true
+    );
   `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS studio_bookable_slots (
@@ -133,27 +175,64 @@ async function ensureSchema() {
 }
 
 type StudioTemplate = {
+  id: number;
+  name: string;
   dayStart: string;
   dayEnd: string;
   slotIntervalMinutes: number;
 };
 
-async function loadStudioTemplate(): Promise<StudioTemplate> {
+async function loadStudioTemplates(): Promise<StudioTemplate[]> {
   const result = await pool.query<{
+    id: number;
+    name: string;
     ds: string;
     de: string;
     slot_interval_minutes: number;
   }>(
-    `SELECT to_char(day_start, 'HH24:MI') AS ds,
+    `SELECT id,
+            name,
+            to_char(day_start, 'HH24:MI') AS ds,
             to_char(day_end, 'HH24:MI') AS de,
             slot_interval_minutes
-     FROM studio_settings WHERE id = 1`
+     FROM studio_settings
+     ORDER BY id ASC`
+  );
+  return result.rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    dayStart: normalizeTimeToHHMM(row.ds),
+    dayEnd: normalizeTimeToHHMM(row.de),
+    slotIntervalMinutes: row.slot_interval_minutes,
+  }));
+}
+
+async function loadStudioTemplateById(id: number): Promise<StudioTemplate | null> {
+  const result = await pool.query<{
+    id: number;
+    name: string;
+    ds: string;
+    de: string;
+    slot_interval_minutes: number;
+  }>(
+    `SELECT id,
+            name,
+            to_char(day_start, 'HH24:MI') AS ds,
+            to_char(day_end, 'HH24:MI') AS de,
+            slot_interval_minutes
+     FROM studio_settings
+     WHERE id = $1`,
+    [id]
   );
   const row = result.rows[0];
-  const dayStart = row ? normalizeTimeToHHMM(row.ds) : '09:00';
-  const dayEnd = row ? normalizeTimeToHHMM(row.de) : '18:00';
-  const slotIntervalMinutes = row?.slot_interval_minutes ?? 30;
-  return { dayStart, dayEnd, slotIntervalMinutes };
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    dayStart: normalizeTimeToHHMM(row.ds),
+    dayEnd: normalizeTimeToHHMM(row.de),
+    slotIntervalMinutes: row.slot_interval_minutes,
+  };
 }
 
 /** Bookable HH:MM slots for a calendar day (Asia/Manila business dates stored as DATE). */
@@ -218,6 +297,19 @@ app.get('/api/studio/settings', async (req, res) => {
     return;
   }
   try {
+    const approved = await pool.query<{ exists: boolean }>(
+      `SELECT EXISTS(
+         SELECT 1
+         FROM inquiries
+         WHERE visit_date = $1::date
+           AND status = 'approved'
+       ) AS exists`,
+      [date]
+    );
+    if (approved.rows[0]?.exists) {
+      res.json({ slots: [] });
+      return;
+    }
     const slots = await loadBookableSlotsForDate(date);
     res.json({ slots });
   } catch (err) {
@@ -234,6 +326,12 @@ app.get('/api/studio/available-dates', async (_req, res) => {
       `SELECT DISTINCT slot_date::text AS d
        FROM studio_bookable_slots
        WHERE slot_date >= $1::date
+         AND NOT EXISTS (
+           SELECT 1
+           FROM inquiries i
+           WHERE i.visit_date = studio_bookable_slots.slot_date
+             AND i.status = 'approved'
+         )
        ORDER BY d ASC`,
       [todayManila]
     );
@@ -244,19 +342,20 @@ app.get('/api/studio/available-dates', async (_req, res) => {
   }
 });
 
-app.get('/api/admin/studio-settings', requireAdmin, async (_req, res) => {
+app.get('/api/admin/studio-templates', requireAdmin, async (_req, res) => {
   try {
-    const payload = await loadStudioTemplate();
+    const payload = await loadStudioTemplates();
     res.json(payload);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Could not load studio settings' });
+    res.status(500).json({ error: 'Could not load studio templates' });
   }
 });
 
-app.put('/api/admin/studio-settings', requireAdmin, async (req, res) => {
-  const { dayStart, dayEnd, slotIntervalMinutes } = req.body ?? {};
+app.post('/api/admin/studio-templates', requireAdmin, async (req, res) => {
+  const { name, dayStart, dayEnd, slotIntervalMinutes } = req.body ?? {};
   if (
+    typeof name !== 'string' ||
     typeof dayStart !== 'string' ||
     typeof dayEnd !== 'string' ||
     typeof slotIntervalMinutes !== 'number' ||
@@ -267,6 +366,15 @@ app.put('/api/admin/studio-settings', requireAdmin, async (req, res) => {
   }
   if (!(ALLOWED_SLOT_INTERVALS as readonly number[]).includes(slotIntervalMinutes)) {
     res.status(400).json({ error: 'slotIntervalMinutes must be 15, 30, 60, 90, or 120' });
+    return;
+  }
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    res.status(400).json({ error: 'name is required' });
+    return;
+  }
+  if (trimmedName.length > 80) {
+    res.status(400).json({ error: 'name must be 80 characters or fewer' });
     return;
   }
   const a = parseHHMM(dayStart);
@@ -289,17 +397,121 @@ app.put('/api/admin/studio-settings', requireAdmin, async (req, res) => {
     return;
   }
   try {
-    await pool.query(
-      `UPDATE studio_settings
-       SET day_start = $1::time, day_end = $2::time, slot_interval_minutes = $3
-       WHERE id = 1`,
-      [dayStart.trim(), dayEnd.trim(), slotIntervalMinutes]
+    const result = await pool.query<{ id: number }>(
+      `INSERT INTO studio_settings (name, day_start, day_end, slot_interval_minutes)
+       VALUES ($1, $2::time, $3::time, $4)
+       RETURNING id`,
+      [trimmedName, dayStart.trim(), dayEnd.trim(), slotIntervalMinutes]
     );
-    const payload = await loadStudioTemplate();
+    const payload = await loadStudioTemplateById(result.rows[0].id);
+    res.status(201).json(payload);
+  } catch (err: unknown) {
+    const code = err && typeof err === 'object' && 'code' in err ? (err as { code?: string }).code : '';
+    if (code === '23505') {
+      res.status(409).json({ error: 'A template with that name already exists' });
+      return;
+    }
+    console.error(err);
+    res.status(500).json({ error: 'Could not create studio template' });
+  }
+});
+
+app.patch('/api/admin/studio-templates/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    res.status(400).json({ error: 'Invalid id' });
+    return;
+  }
+  const { name, dayStart, dayEnd, slotIntervalMinutes } = req.body ?? {};
+  if (
+    typeof name !== 'string' ||
+    typeof dayStart !== 'string' ||
+    typeof dayEnd !== 'string' ||
+    typeof slotIntervalMinutes !== 'number' ||
+    !Number.isInteger(slotIntervalMinutes)
+  ) {
+    res.status(400).json({ error: 'Invalid payload' });
+    return;
+  }
+  if (!(ALLOWED_SLOT_INTERVALS as readonly number[]).includes(slotIntervalMinutes)) {
+    res.status(400).json({ error: 'slotIntervalMinutes must be 15, 30, 60, 90, or 120' });
+    return;
+  }
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    res.status(400).json({ error: 'name is required' });
+    return;
+  }
+  if (trimmedName.length > 80) {
+    res.status(400).json({ error: 'name must be 80 characters or fewer' });
+    return;
+  }
+  const a = parseHHMM(dayStart);
+  const b = parseHHMM(dayEnd);
+  if (!a.ok || !b.ok) {
+    res.status(400).json({ error: 'dayStart and dayEnd must be HH:MM (24h)' });
+    return;
+  }
+  if (b.minutes <= a.minutes) {
+    res.status(400).json({ error: 'End time must be after start time' });
+    return;
+  }
+  const slots = generateTimeSlots(
+    `${String(Math.floor(a.minutes / 60)).padStart(2, '0')}:${String(a.minutes % 60).padStart(2, '0')}`,
+    `${String(Math.floor(b.minutes / 60)).padStart(2, '0')}:${String(b.minutes % 60).padStart(2, '0')}`,
+    slotIntervalMinutes
+  );
+  if (slots.length === 0) {
+    res.status(400).json({ error: 'No time slots fit in the selected range' });
+    return;
+  }
+  try {
+    const result = await pool.query<{ id: number }>(
+      `UPDATE studio_settings
+       SET name = $1, day_start = $2::time, day_end = $3::time, slot_interval_minutes = $4
+       WHERE id = $5
+       RETURNING id`,
+      [trimmedName, dayStart.trim(), dayEnd.trim(), slotIntervalMinutes, id]
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+    const payload = await loadStudioTemplateById(id);
     res.json(payload);
+  } catch (err: unknown) {
+    const code = err && typeof err === 'object' && 'code' in err ? (err as { code?: string }).code : '';
+    if (code === '23505') {
+      res.status(409).json({ error: 'A template with that name already exists' });
+      return;
+    }
+    console.error(err);
+    res.status(500).json({ error: 'Could not update studio template' });
+  }
+});
+
+app.delete('/api/admin/studio-templates/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    res.status(400).json({ error: 'Invalid id' });
+    return;
+  }
+  try {
+    const count = await pool.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM studio_settings`);
+    const total = Number(count.rows[0]?.count ?? '0');
+    if (total <= 1) {
+      res.status(409).json({ error: 'At least one template is required' });
+      return;
+    }
+    const result = await pool.query(`DELETE FROM studio_settings WHERE id = $1 RETURNING id`, [id]);
+    if (result.rowCount === 0) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+    res.json({ ok: true });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Could not save studio settings' });
+    res.status(500).json({ error: 'Could not delete studio template' });
   }
 });
 
@@ -400,13 +612,22 @@ app.patch('/api/admin/bookable-slots/:id', requireAdmin, async (req, res) => {
 });
 
 app.post('/api/admin/bookable-slots/fill-from-template', requireAdmin, async (req, res) => {
-  const { slotDate } = req.body ?? {};
+  const { slotDate, templateId } = req.body ?? {};
   if (typeof slotDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(slotDate.trim())) {
     res.status(400).json({ error: 'slotDate must be YYYY-MM-DD' });
     return;
   }
+  const id = Number(templateId);
+  if (!Number.isInteger(id) || id < 1) {
+    res.status(400).json({ error: 'templateId must be a valid id' });
+    return;
+  }
   try {
-    const template = await loadStudioTemplate();
+    const template = await loadStudioTemplateById(id);
+    if (!template) {
+      res.status(404).json({ error: 'Template not found' });
+      return;
+    }
     const generated = generateTimeSlots(template.dayStart, template.dayEnd, template.slotIntervalMinutes);
     if (generated.length === 0) {
       res.status(400).json({ error: 'Template produces no slots — widen start/end in Schedule template' });
@@ -649,8 +870,10 @@ app.patch('/api/admin/inquiries/:id', requireAdmin, async (req, res) => {
     res.status(400).json({ error: 'status must be approved or cancelled' });
     return;
   }
+  const client = await pool.connect();
   try {
-    const result = await pool.query<InquiryRowDb>(
+    await client.query('BEGIN');
+    const result = await client.query<InquiryRowDb>(
       `UPDATE inquiries
        SET status = $2::text, reviewed_at = NOW()
        WHERE id = $1 AND status = 'pending'
@@ -661,7 +884,8 @@ app.patch('/api/admin/inquiries/:id', requireAdmin, async (req, res) => {
       [id, status]
     );
     if (result.rowCount === 0) {
-      const ex = await pool.query<{ status: string }>(`SELECT status FROM inquiries WHERE id = $1`, [id]);
+      const ex = await client.query<{ status: string }>(`SELECT status FROM inquiries WHERE id = $1`, [id]);
+      await client.query('ROLLBACK');
       if (ex.rowCount === 0) {
         res.status(404).json({ error: 'Not found' });
         return;
@@ -670,6 +894,11 @@ app.patch('/api/admin/inquiries/:id', requireAdmin, async (req, res) => {
       return;
     }
     const row = result.rows[0];
+    if (status === 'approved' && row.visit_date) {
+      // Approved booking consumes the whole calendar date.
+      await client.query(`DELETE FROM studio_bookable_slots WHERE slot_date = $1::date`, [row.visit_date]);
+    }
+    await client.query('COMMIT');
     if (status === 'approved') {
       void notifyUserBookingApproved(row).catch((e) => console.error('[mail] user approved:', e));
     } else {
@@ -677,8 +906,15 @@ app.patch('/api/admin/inquiries/:id', requireAdmin, async (req, res) => {
     }
     res.json(row);
   } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      // no-op
+    }
     console.error(err);
     res.status(500).json({ error: 'Could not update inquiry' });
+  } finally {
+    client.release();
   }
 });
 

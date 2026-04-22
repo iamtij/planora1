@@ -64,6 +64,7 @@ function inquiryStatusClass(s: InquiryStatus): string {
 }
 
 type BookableSlotRow = { id: number; slot_date: string; slot_time: string };
+type StudioTemplate = { id: number; name: string; dayStart: string; dayEnd: string; slotIntervalMinutes: number };
 
 function todayYmdLocal(): string {
   const t = new Date();
@@ -188,11 +189,16 @@ const Admin: React.FC = () => {
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(1);
 
+  const [templates, setTemplates] = useState<StudioTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+  const [isCreatingTemplate, setIsCreatingTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
   const [dayStart, setDayStart] = useState('09:00');
   const [dayEnd, setDayEnd] = useState('18:00');
   const [slotInterval, setSlotInterval] = useState(30);
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateDeletingId, setTemplateDeletingId] = useState<number | null>(null);
   const [studioLoading, setStudioLoading] = useState(false);
-  const [studioSaving, setStudioSaving] = useState(false);
   const [studioMsg, setStudioMsg] = useState<string | null>(null);
   const [studioErr, setStudioErr] = useState<string | null>(null);
 
@@ -202,6 +208,7 @@ const Admin: React.FC = () => {
   const [newSlotDate, setNewSlotDate] = useState('');
   const [newSlotTime, setNewSlotTime] = useState('');
   const [fillTemplateDate, setFillTemplateDate] = useState('');
+  const [fillTemplateId, setFillTemplateId] = useState<number | null>(null);
   const [fillBusy, setFillBusy] = useState(false);
   const [addSlotBusy, setAddSlotBusy] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -285,11 +292,11 @@ const Admin: React.FC = () => {
     [token, fetchInquiries]
   );
 
-  const fetchStudioSettings = useCallback(async (t: string) => {
+  const fetchStudioTemplates = useCallback(async (t: string) => {
     setStudioLoading(true);
     setStudioErr(null);
     try {
-      const res = await fetch('/api/admin/studio-settings', {
+      const res = await fetch('/api/admin/studio-templates', {
         headers: { Authorization: `Bearer ${t}` },
       });
       if (res.status === 401) {
@@ -300,13 +307,16 @@ const Admin: React.FC = () => {
       }
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        setStudioErr(data.error ?? 'Could not load studio settings');
+        setStudioErr(data.error ?? 'Could not load templates');
         return;
       }
-      const data = (await res.json()) as { dayStart: string; dayEnd: string; slotIntervalMinutes: number };
-      setDayStart(data.dayStart);
-      setDayEnd(data.dayEnd);
-      setSlotInterval(data.slotIntervalMinutes);
+      const data = (await res.json()) as StudioTemplate[];
+      setTemplates(data);
+      if (data.length === 0) {
+        setSelectedTemplateId(null);
+        setTemplateName('');
+        setFillTemplateId(null);
+      }
     } catch {
       setStudioErr('Could not reach the server.');
     } finally {
@@ -316,9 +326,27 @@ const Admin: React.FC = () => {
 
   useEffect(() => {
     if (token) {
-      void fetchStudioSettings(token);
+      void fetchStudioTemplates(token);
+    } else {
+      setTemplates([]);
+      setIsCreatingTemplate(false);
+      setSelectedTemplateId(null);
+      setFillTemplateId(null);
     }
-  }, [token, fetchStudioSettings]);
+  }, [token, fetchStudioTemplates]);
+
+  useEffect(() => {
+    if (templates.length === 0 || isCreatingTemplate) return;
+    const selected = templates.find((tpl) => tpl.id === selectedTemplateId) ?? templates[0];
+    if (selectedTemplateId !== selected.id) {
+      setSelectedTemplateId(selected.id);
+    }
+    setTemplateName(selected.name);
+    setDayStart(selected.dayStart);
+    setDayEnd(selected.dayEnd);
+    setSlotInterval(selected.slotIntervalMinutes);
+    setFillTemplateId((prev) => (prev != null && templates.some((tpl) => tpl.id === prev) ? prev : selected.id));
+  }, [templates, selectedTemplateId, isCreatingTemplate]);
 
   const fetchBookableSlots = useCallback(async (t: string) => {
     setBookableLoading(true);
@@ -391,7 +419,7 @@ const Admin: React.FC = () => {
 
   const handleFillDayFromTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token || !fillTemplateDate.trim()) return;
+    if (!token || !fillTemplateDate.trim() || fillTemplateId == null) return;
     setFillBusy(true);
     setBookableErr(null);
     try {
@@ -401,7 +429,7 @@ const Admin: React.FC = () => {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ slotDate: fillTemplateDate.trim() }),
+        body: JSON.stringify({ slotDate: fillTemplateDate.trim(), templateId: fillTemplateId }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string; inserted?: number };
       if (res.status === 401) {
@@ -538,17 +566,28 @@ const Admin: React.FC = () => {
   const handleSaveStudio = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
-    setStudioSaving(true);
+    const trimmedName = templateName.trim();
+    if (!trimmedName) {
+      setStudioErr('Template name is required');
+      return;
+    }
+    setTemplateSaving(true);
     setStudioMsg(null);
     setStudioErr(null);
     try {
-      const res = await fetch('/api/admin/studio-settings', {
-        method: 'PUT',
+      const method = selectedTemplateId == null || isCreatingTemplate ? 'POST' : 'PATCH';
+      const url =
+        selectedTemplateId == null || isCreatingTemplate
+          ? '/api/admin/studio-templates'
+          : `/api/admin/studio-templates/${selectedTemplateId}`;
+      const res = await fetch(url, {
+        method,
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          name: trimmedName,
           dayStart,
           dayEnd,
           slotIntervalMinutes: slotInterval,
@@ -556,9 +595,7 @@ const Admin: React.FC = () => {
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
-        dayStart?: string;
-        dayEnd?: string;
-        slotIntervalMinutes?: number;
+        id?: number;
       };
       if (res.status === 401) {
         sessionStorage.removeItem(TOKEN_KEY);
@@ -567,19 +604,55 @@ const Admin: React.FC = () => {
         return;
       }
       if (!res.ok) {
-        setStudioErr(typeof data.error === 'string' ? data.error : 'Could not save studio settings');
+        setStudioErr(typeof data.error === 'string' ? data.error : 'Could not save studio template');
         return;
       }
-      if (data.dayStart != null && data.dayEnd != null && data.slotIntervalMinutes != null) {
-        setDayStart(data.dayStart);
-        setDayEnd(data.dayEnd);
-        setSlotInterval(data.slotIntervalMinutes);
+      if (typeof data.id === 'number') {
+        setIsCreatingTemplate(false);
+        setSelectedTemplateId(data.id);
+        setFillTemplateId((prev) => prev ?? data.id);
       }
-      setStudioMsg('Studio availability saved.');
+      await fetchStudioTemplates(token);
+      setStudioMsg('Template saved.');
     } catch {
       setStudioErr('Could not reach the server.');
     } finally {
-      setStudioSaving(false);
+      setTemplateSaving(false);
+    }
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!token || selectedTemplateId == null) return;
+    const selected = templates.find((tpl) => tpl.id === selectedTemplateId);
+    if (!selected) return;
+    const ok = window.confirm(`Delete template "${selected.name}"? This cannot be undone.`);
+    if (!ok) return;
+    setTemplateDeletingId(selected.id);
+    setStudioErr(null);
+    setStudioMsg(null);
+    try {
+      const res = await fetch(`/api/admin/studio-templates/${selected.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (res.status === 401) {
+        sessionStorage.removeItem(TOKEN_KEY);
+        setToken(null);
+        setStudioErr('Session expired. Sign in again.');
+        return;
+      }
+      if (!res.ok) {
+        setStudioErr(data.error ?? 'Could not delete template');
+        return;
+      }
+      setStudioMsg('Template deleted.');
+      setIsCreatingTemplate(false);
+      await fetchStudioTemplates(token);
+    } catch {
+      setStudioErr('Could not reach the server.');
+    } finally {
+      setTemplateDeletingId(null);
     }
   };
 
@@ -1146,6 +1219,24 @@ const Admin: React.FC = () => {
                 <p className="text-[10px] font-bold uppercase tracking-architect opacity-40">Fill whole day from template</p>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <label className="block space-y-2">
+                    <span className="text-[10px] font-bold uppercase tracking-architect opacity-40">Template</span>
+                    <select
+                      value={fillTemplateId ?? ''}
+                      onChange={(e) => setFillTemplateId(e.target.value ? Number(e.target.value) : null)}
+                      className="w-full border-2 border-black bg-white px-3 py-2 font-mono text-sm outline-none focus:border-bauhaus-blue"
+                      required
+                    >
+                      <option value="" disabled>
+                        Select template
+                      </option>
+                      {templates.map((tpl) => (
+                        <option key={tpl.id} value={tpl.id}>
+                          {tpl.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block space-y-2">
                     <span className="text-[10px] font-bold uppercase tracking-architect opacity-40">Date</span>
                     <input
                       type="date"
@@ -1157,7 +1248,7 @@ const Admin: React.FC = () => {
                   </label>
                   <button
                     type="submit"
-                    disabled={fillBusy || bookableLoading}
+                    disabled={fillBusy || bookableLoading || fillTemplateId == null}
                     className="shrink-0 border-2 border-black bg-white px-5 py-2.5 text-[10px] font-bold uppercase tracking-architect transition-colors hover:bg-bauhaus-beige disabled:opacity-50"
                   >
                     {fillBusy ? 'Filling…' : 'Fill day'}
@@ -1179,21 +1270,70 @@ const Admin: React.FC = () => {
                 element={
                   <section id="studio-schedule" className="scroll-mt-24 border border-black/15 bg-white p-6 sm:p-8 hairline-border">
             <p className="text-sm text-black/60 mb-6">
-              Default open hours and slot spacing. Save this first, then use <strong className="text-black/80">Fill day</strong> on the <strong className="text-black/80">Bookable dates</strong> tab to generate all times for one calendar date at once.
+              Create multiple templates with different open hours and slot spacing, then use each template from the{' '}
+              <strong className="text-black/80">Bookable dates</strong> tab to fill a day.
             </p>
             <p className="mb-6 rounded-sm border border-black/10 bg-bauhaus-beige/80 px-4 py-3 text-xs text-black/70 leading-relaxed">
               <strong className="text-black">Slot interval</strong> is only the gap between times (15 / 30 / 60 / 90 / 120 <strong>minutes</strong>). It is{' '}
               <strong>not</strong> for choosing calendar days — those are set on the <strong>Bookable dates</strong> tab.
             </p>
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-[minmax(14rem,20rem),auto] sm:items-end">
+              <label className="block space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-architect opacity-40">Select template</span>
+                <select
+                  value={selectedTemplateId ?? ''}
+                  onChange={(e) => {
+                    setIsCreatingTemplate(false);
+                    setSelectedTemplateId(e.target.value ? Number(e.target.value) : null);
+                  }}
+                  disabled={studioLoading || templateSaving || templates.length === 0}
+                  className="w-full border-2 border-black bg-white px-3 py-2 font-mono text-sm outline-none focus:border-bauhaus-blue disabled:opacity-50"
+                >
+                  {templates.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreatingTemplate(true);
+                  setSelectedTemplateId(null);
+                  setTemplateName('');
+                  setDayStart('09:00');
+                  setDayEnd('18:00');
+                  setSlotInterval(30);
+                  setStudioErr(null);
+                  setStudioMsg(null);
+                }}
+                className="h-[42px] border-2 border-black bg-white px-5 text-[10px] font-bold uppercase tracking-architect hover:bg-black/5"
+              >
+                New template
+              </button>
+            </div>
             <form onSubmit={handleSaveStudio} className="flex flex-col gap-6 lg:flex-row lg:flex-wrap lg:items-end">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
+                <label className="block space-y-2 sm:col-span-2 lg:col-span-1">
+                  <span className="text-[10px] font-bold uppercase tracking-architect opacity-40">Template name</span>
+                  <input
+                    type="text"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    maxLength={80}
+                    disabled={studioLoading || templateSaving}
+                    className="w-full border-2 border-black px-3 py-2 font-mono text-sm outline-none focus:border-bauhaus-blue disabled:opacity-50"
+                    required
+                  />
+                </label>
                 <label className="block space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-architect opacity-40">Start time</span>
                   <input
                     type="time"
                     value={dayStart}
                     onChange={(e) => setDayStart(e.target.value)}
-                    disabled={studioLoading || studioSaving}
+                    disabled={studioLoading || templateSaving}
                     className="w-full border-2 border-black px-3 py-2 font-mono text-sm outline-none focus:border-bauhaus-blue disabled:opacity-50"
                     required
                   />
@@ -1204,7 +1344,7 @@ const Admin: React.FC = () => {
                     type="time"
                     value={dayEnd}
                     onChange={(e) => setDayEnd(e.target.value)}
-                    disabled={studioLoading || studioSaving}
+                    disabled={studioLoading || templateSaving}
                     className="w-full border-2 border-black px-3 py-2 font-mono text-sm outline-none focus:border-bauhaus-blue disabled:opacity-50"
                     required
                   />
@@ -1214,7 +1354,7 @@ const Admin: React.FC = () => {
                   <select
                     value={slotInterval}
                     onChange={(e) => setSlotInterval(Number(e.target.value))}
-                    disabled={studioLoading || studioSaving}
+                    disabled={studioLoading || templateSaving}
                     className="w-full border-2 border-black bg-white px-3 py-2 font-mono text-sm outline-none focus:border-bauhaus-blue disabled:opacity-50"
                   >
                     <option value={15}>15 minutes</option>
@@ -1227,14 +1367,22 @@ const Admin: React.FC = () => {
               </div>
               <button
                 type="submit"
-                disabled={studioLoading || studioSaving}
+                disabled={studioLoading || templateSaving}
                 className="shrink-0 border-2 border-black bg-black px-6 py-2.5 text-[10px] font-bold uppercase tracking-architect text-white transition-colors hover:bg-bauhaus-red disabled:opacity-50"
               >
-                {studioSaving ? 'Saving…' : 'Save template'}
+                {templateSaving ? 'Saving…' : selectedTemplateId == null ? 'Create template' : 'Save template'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDeleteTemplate()}
+                disabled={selectedTemplateId == null || templateSaving || templateDeletingId != null}
+                className="shrink-0 border-2 border-black bg-white px-6 py-2.5 text-[10px] font-bold uppercase tracking-architect hover:bg-black/5 disabled:opacity-50"
+              >
+                {templateDeletingId != null ? 'Deleting…' : 'Delete template'}
               </button>
             </form>
             {studioLoading ? (
-              <p className="mt-4 text-[10px] font-mono text-black/40">Loading settings…</p>
+              <p className="mt-4 text-[10px] font-mono text-black/40">Loading templates…</p>
             ) : null}
             {studioErr ? (
               <p className="mt-4 text-bauhaus-red text-xs font-bold uppercase tracking-architect" role="alert">
